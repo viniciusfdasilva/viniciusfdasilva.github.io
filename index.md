@@ -1,118 +1,157 @@
-## Benchmark Generation via L-Systems
+## Areas of Interest
 
 ---
 
-### About:
-
-<p style="text-align:justify;">BenchGen implements an L-System to generate programs from a seed string and a set of production rules, enabling the creation of large programs through iterative expansion of the L-System. The program generator is entirely written in C++. To know more about how BenchGen works, you can read a brief <a href="https://lac-dcc.github.io/pubs/TechReports/LaC_TechReport022025.pdf">report</a> about it.</p>
-
-<p style="text-align:justify;">The BenchGen is develop in <a href="https://lac-dcc.github.io/">Compilers Lab</a> and is financed by <a href="https://fapemig.br/">FAPEMIG</a> and Google. We appreciate their support and contributions to the development of this project.</p>
-
----
-
-### Releases:
-
-##### • C Language Support:
-<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-tag">
-    <path d="M1 7.775V2.75C1 1.784 1.784 1 2.75 1h5.025c.464 0 .91.184 1.238.513l6.25 6.25a1.75 1.75 0 0 1 0 2.474l-5.026 5.026a1.75 1.75 0 0 1-2.474 0l-6.25-6.25A1.752 1.752 0 0 1 1 7.775Zm1.5 0c0 .066.026.13.073.177l6.25 6.25a.25.25 0 0 0 .354 0l5.025-5.025a.25.25 0 0 0 0-.354l-6.25-6.25a.25.25 0 0 0-.177-.073H2.75a.25.25 0 0 0-.25.25ZM6 5a1 1 0 1 1 0 2 1 1 0 0 1 0-2Z"></path>
-</svg> <a href="https://github.com/lac-dcc/BenchGen/releases/tag/v1.0.0-alpha">v1.0.0-alpha</a></p>
-
-##### • Multi Language Support:
-<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-tag">
-    <path d="M1 7.775V2.75C1 1.784 1.784 1 2.75 1h5.025c.464 0 .91.184 1.238.513l6.25 6.25a1.75 1.75 0 0 1 0 2.474l-5.026 5.026a1.75 1.75 0 0 1-2.474 0l-6.25-6.25A1.752 1.752 0 0 1 1 7.775Zm1.5 0c0 .066.026.13.073.177l6.25 6.25a.25.25 0 0 0 .354 0l5.025-5.025a.25.25 0 0 0 0-.354l-6.25-6.25a.25.25 0 0 0-.177-.073H2.75a.25.25 0 0 0-.25.25ZM6 5a1 1 0 1 1 0 2 1 1 0 0 1 0-2Z"></path>
-</svg> <a href="https://github.com/lac-dcc/BenchGen/releases/tag/v1.0.0-beta">v1.0.0-beta</a></p>
-
+* Compilers
+* Code Optimization
+* Satisfiability (SAT)
+* Formal Verification
+* Virtualization and Containerization
+* Operating Systems
+* Kernel Bypass techniques
+* Programming Language Theory λ
 
 ---
 
-### Installing and Running:
-After cloning the repository, you can build the project by running the `make` command in the `src/gen` directory. Notice that clang++ is used as the default compiler.
+## Previous work
 
-To run BenchGen, you need to provide the following five parameters: An example of usage is:
+<div style="text-align: justify">
 
-#### Run in alpha version:
+<p>I hold a Bachelor’s degree in Computer Science from the Pontifical Catholic University of Minas Gerais (PUCMINAS), with over two years of research experience in compilers and operating systems. In the Nanvix OS project, I built a just-in-time translator from MIPS to RISC-V for a virtual machine. For my final project, I implemented a zero-copy interprocess communication library for microkernel systems.</p>
 
-```bash
-git clone --branch v1.0.0-alpha https://github.com/lac-dcc/BenchGen.git
-make -C ./BenchGen/src/gen/
-```
+<p>During my studies, I was a teaching assistant for Databases, Algorithms and Data Structures II, and Compilers.</p>
 
-```bash
-./benchGen 1 productionRule.txt seedString.txt myProgram array
-```
+<p>I worked as a Mid-Level Web Developer at Sociedade Mineira de Cultura and developed mobile applications for the PUCMINAS Dental Clinic, resulting in five registered software patents and as a Linux Kernel Developer at MagaluCloud, contributing to kernel-level and open-source infrastructure projects.</p>
 
-#### Run in beta version:
-
-```bash
-git clone --branch v1.0.0-beta https://github.com/lac-dcc/BenchGen.git
-make -C ./BenchGen/src/gen/
-```
-
-```bash
-./benchGen 1 productionRule.txt seedString.txt myProgram array programmingLanguage
-```
-
-See more: [here](https://github.com/lac-dcc/BenchGen/blob/main/README.md#building-benchgen)
+<p>I was also a volunteer at <i>International Conference on Parallel Architectures and Compilation Techniques</i> (PACT25) on the Artifact Evaluation Committee.</p>
+</div>
 
 ---
 
-### How to create a benchmark via L-grammar
-The L-system grammar used by **BenchGen** currently supports three commands:
-
-* **IF** – conditional statements (`if-then-else`)  
-* **LOOP** – iterative structures (`for` and `while`)  
-* **CALL** – function calls  
-
-BenchGen also employs **data structures** in its benchmarks, providing four functions for data manipulation:
-
-* **new:** Creates and initializes a data structure.  
-* **insert:** Adds an element to a data structure in scope.  
-* **remove:** Deletes an element from a data structure in scope.  
-* **contains:** Checks whether an element exists in a data structure in scope.  
-
-Based on this, we can define **production rules** that describe how the benchmark will be structured:
-
-#### Axiom
-```text
-CALL(new A)
-```
-
-#### Production Rules
-```text
-A = LOOP(B C contains);
-B = IF(new LOOP(remove contains), new A remove contains);
-C = new contains B;
-```
-
-<p style="text-align:justify;">This program, for instance, begins with a function call that creates a new data structure using the new command. Then, a loop structure is created according to rule A, which calls rules B and C, checking the structure using the contains command.</p>
-
-For more details, our technical report provides additional information on the syntax of control structures in [Section 3.1](https://lac-dcc.github.io/pubs/TechReports/LaC_TechReport022025.pdf#page=4.77).
+## Recent News
 
 ---
 
-### Contributing
-
-* <p style="text-align:justify;">BenchGen, in its beta version, supports generating benchmarks in multiple programming languages. To contribute by adding new programming languages, you can follow this <a href="https://github.com/lac-dcc/BenchGen/wiki/Adding-a-New-Programming-Language-to-BenchGen">documentation</a>, which explains step-by-step how to add and use BenchGen with your programming language!</p>
-
-
-* <p style="text-align:justify;">To contribute to the alpha version of BenchGen, we have open <a href="https://github.com/lac-dcc/BenchGen/issues">issues</a> where you can help us make BenchGen even better.</p>
-
-* <p style="text-align:justify;">You can also report bugs by opening an issue <a href="https://github.com/lac-dcc/BenchGen/issues/new">here</a>.</p>
-
-<a target="_blank" 
-   style="display: inline-flex; align-items: center; padding: 5px 10px; 
-          background-color: #24292e; color: #fff; text-decoration: none; 
-          border-radius: 5px; font-weight: bold; font-family: sans-serif;" href="https://github.com/lac-dcc/BenchGen/fork"><img src="./images/code-fork-symbol.png" alt="Descrição da imagem" width="20" height="20">&nbsp;Fork on GitHub</a>
+<img src="./images/linkedin.png" width="20" height="20">
 
 ---
 
-### Team
+### The Impact of Profile Guided Optimizations
 
-* [Vinicius Francisco da Silva](mailto:viniciusilva@ieee.org) - Federal University of Minas Gerais (UFMG)
-* Heitor Leite - Federal University of Minas Gerais (UFMG)
-* Fernando Magno Quintão Pereira - Federal University of Minas Gerais (UFMG)
+[see post](https://www.linkedin.com/posts/compilers-lab_compiler-research-programming-activity-7384698030937165825-4NQa?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q)
+
+<img src="./images/1760649210634.jpeg">
 
 ---
+
+### Request for Feedback
+
+[see post](https://www.linkedin.com/posts/compilers-lab_vinicius-silva-viniciusilvaieeeorg-and-activity-7379876088342020096-2v-f?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q)
+
+<img src="./images/1759499569467.jpeg">
+
+---
+
+### A comparison of different programming languages using BenchGen
+
+[see post](https://www.linkedin.com/posts/compilers-lab_compiler-programming-fractal-activity-7373684878262841344-Axz7?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q)
+
+<img src="./images/1758023470487.jpeg">
+
+---
+
+### Relationship between compilation time and execution time using BenchGen
+
+[see post](https://www.linkedin.com/posts/compilers-lab_compilers-programming-education-activity-7349350324861595649-lNqh?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q)
+
+<img src="./images/1752221661023.jpeg">
+
+---
+
+### BenchGen technical report
+
+[see post](https://www.linkedin.com/posts/compilers-lab_programming-compiler-fractal-activity-7339717382224973825-nQEp?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q)
+
+<img src="./images/1749924988335.jpeg">
+
+---
+
+### An evolution of GCC across different versions
+
+[see post](https://www.linkedin.com/posts/compilers-lab_if-you-compare-gcc-5-april-2015-to-gcc-activity-7336481822442205184-gVx3?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q)
+
+<img src="./images/1749153570604.jpeg" width="700" height="400">
+---
+
+### BenchGen: Fractal-Based Program Generator
+
+[see post](https://www.linkedin.com/posts/compilers-lab_benchgen-is-a-benchmark-generator-that-uses-activity-7332796843174588417-sqqA?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q)
+
+<img src="./images/1748275003418.jpeg" width="700" height="400">
+
+---
+
+### Comparison of different optimization levels in GCC
+
+[see post](https://www.linkedin.com/posts/compilers-lab_theory-programming-compiler-activity-7326285792224456704-szta?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q)
+
+<img src="./images/1746722647435.jpeg" width="700" height="400">
+
+
+---
+
+### Clang and GCC comparison using BenchGen
+
+[see post](https://www.linkedin.com/posts/compilers-lab_compilers-clang-gcc-activity-7310325694117388288-QPYp?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q)
+
+<img src="./images/1742917463147.jpeg" alt="Descrição da imagem" width="700" height="400">
+
+---
+
+### BenchGen - An C Benchmark Generator via L-Systems
+
+[see post](https://www.linkedin.com/posts/compilers-lab_breaking-news-students-from-ufmgs-compilers-activity-7255264752136798208-kdTH?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q)
+
+<img src="./images/1729789911667.jpeg" alt="Descrição da imagem" width="700" height="400">
+
+---
+
+<img src="./images/reddit.png" width="20" height="20">
+
+---
+
+### r/ProgrammingLanguages
+
+[see post](https://www.reddit.com/r/ProgrammingLanguages/comments/1nil3we/benchgen_a_multilanguage_benchmark_generator_via/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button)
+
+---
+
+
+### r/Julia
+
+[see post](https://www.reddit.com/r/Julia/comments/1njqp4k/a_benchmark_generator_to_compare_the_performance/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button)
+
+---
+
+### r/Compilers
+
+[see post](https://www.reddit.com/r/Compilers/comments/1o96bb7/the_impact_of_profile_guided_optimizations/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button)
+
+[see post](https://www.reddit.com/r/Compilers/comments/1l542yk/benchgen_a_fractalbased_program_generator/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button)
+
+[see post](https://www.reddit.com/r/Compilers/comments/1njjiqk/a_benchmark_generator_to_compare_the_performance/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button)
+
+
+
+---
+
+
+
+
+
+
+
+
 
 <!-- ### Did lockdowns influence the types of music people were listening to?
 COVID-19 has created an ostensible paradox in the music industry. In the four months after the World Health Organisation declared COVID-19 a pandemic on March 11, 2020, digital music streaming providers such as Spotify and Apple saw their share prices soar by 114% and 49% respectively (Google 2021b). Over the same period, however, worldwide digital music consumption dropped by an average of 12.5% (Sim et al. 2021). One of the reasons which has been suggested for this drop is the decline in certain types of mobility - especially driving, which accounts for 29% of music consumption, and commuting, as 54% of commuters listen to music while commuting (Nielsen 2015, 2017; Sim et al. 2021). What remains unclear, however, is whether and how changes to levels of mobility influenced the types of music to which people were listening. In this project, I investigate these questions using the Spotify API.

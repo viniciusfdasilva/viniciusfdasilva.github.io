@@ -41,14 +41,6 @@
 
 <img src="https://raw.githubusercontent.com/lac-dcc/benchMetrics/refs/heads/main/data/gcc_versions_comparison/gcc_old_and_new.png" alt="Descrição da imagem" width="600" height="600">
 
----
-
-
-### Comparing Compilers
-
-[read here](https://github.com/lac-dcc/benchMetrics/tree/main/data/compilers_experiment)
-
-<img src="https://raw.githubusercontent.com/lac-dcc/benchMetrics/refs/heads/main/data/compilers_experiment/assets/compilers.png" alt="Descrição da imagem" width="700" height="300">
 
 ---
 
