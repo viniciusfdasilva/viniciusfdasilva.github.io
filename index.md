@@ -4,11 +4,9 @@
 
 * Compilers
 * Code Optimization
-* Satisfiability (SAT)
 * Formal Verification
 * Virtualization and Containerization
 * Operating Systems
-* Kernel Bypass techniques
 * Programming Language Theory λ
 
 ---
