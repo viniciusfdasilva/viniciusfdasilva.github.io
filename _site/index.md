@@ -34,6 +34,38 @@
 
 ---
 
+### Five students affiliated with UFMG’s Compilers Lab volunteered to serve as artifact evaluators for the International Conference on Compiler Construction (CC 2026)
+
+[see post](https://www.linkedin.com/posts/compilers-lab_this-year-five-students-affiliated-with-activity-7411032911581282304-eOtn?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q)
+
+<img src="./images/1766927935421.jpeg">
+
+---
+
+### The paper "Multi-Language Benchmark Generation via L-Systems" is available in arXiv!
+
+[see post](https://www.linkedin.com/posts/compilers-lab_research-compiler-academia-activity-7408838161784684545-87Pd?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q)
+
+<img src="./images/1766404666320.jpeg">
+
+---
+
+### BenchGen now supports Odin and Zig benchmarks!
+
+[see post](https://www.linkedin.com/posts/compilers-lab_research-academia-compiler-activity-7401598328016347136-FtpB?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q)
+
+<img src="./images/1764678555463.jpeg">
+
+---
+
+### BenchGen, our fractal-based program generator, now supports V!
+
+[see post](https://www.linkedin.com/feed/update/urn:li:activity:7394012884726333441/?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q)
+
+<img src="./images/1762864761693.jpeg">
+
+---
+
 ### The Impact of Profile Guided Optimizations
 
 [see post](https://www.linkedin.com/posts/compilers-lab_compiler-research-programming-activity-7384698030937165825-4NQa?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q)
