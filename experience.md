@@ -134,6 +134,6 @@
       <h3 class="text">Artifact Evaluator - CC26</h3>
       <p><i>International Conference on Compiler Construction</i></p>
   <br/>
-  <p><img src="https://upload.wikimedia.org/wikipedia/commons/8/8e/Association_for_Computing_Machinery_%28ACM%29_logo.svg" alt="some text" width="150" height="150"></p><br/>        
+  <p><img src="https://upload.wikimedia.org/wikipedia/commons/8/8e/Association_for_Computing_Machinery_%28ACM%29_logo.svg" alt="some text" width="130" height="130"></p><br/>        
   <p>• Artifact Evaluation Committee: <a href="https://conf.researchr.org/committee/CC-2026/CC-2026-artifact-evaluation-committee" style="color: blue">link</a></p>
   </div>
