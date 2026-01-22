@@ -31,6 +31,13 @@
 ---
 
 <img src="./images/linkedin.png" width="20" height="20">
+---
+
+### First PR accepted in Carbon! Adding support for `integer-to-char` conversion.
+
+[see post](https://www.linkedin.com/posts/compilers-lab_we-are-pleased-to-announce-that-a-pull-request-activity-7420086530687467520-lDcn?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q)
+
+<img src="./images/1769086486174.jpeg">
 
 ---
 
