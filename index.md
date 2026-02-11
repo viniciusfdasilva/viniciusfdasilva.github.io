@@ -21,7 +21,7 @@
 
 <p>I worked as a Mid-Level Web Developer at Sociedade Mineira de Cultura and developed mobile applications for the PUCMINAS Dental Clinic, resulting in five registered software patents and as a Linux Kernel Developer at MagaluCloud, contributing to kernel-level and open-source infrastructure projects.</p>
 
-<p>I was also a volunteer at <i>International Conference on Parallel Architectures and Compilation Techniques</i> (PACT25), <i>International Symposium on Code Generation and Optimization (CGO26)</i> and <i>International Conference on Compiler Construction (CC26)</i> on the Artifact Evaluation Committee.</p>
+<p>I was also a volunteer at <i>International Conference on Parallel Architectures and Compilation Techniques</i> (PACT25), <i>International Symposium on Code Generation and Optimization (CGO26)</i>, <i>International Conference on Compiler Construction (CC26) and Conference on Programming Language Design and Implementation (PLDI26)</i> on the Artifact Evaluation Committee.</p>
 </div>
 
 ---
