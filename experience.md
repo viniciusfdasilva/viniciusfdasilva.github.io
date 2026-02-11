@@ -142,6 +142,6 @@
       <h3 class="text">Artifact Evaluator - PLDI26</h3>
       <p><i>Conference on Programming Language Design and Implementation</i></p>
   <br/>
-  <p><img src="https://pldi26.sigplan.org/getImage/orig/logo-pldi-2026-transparent.png" alt="some text" width="200" height="200"></p><br/>        
+  <p><img src="https://pldi26.sigplan.org/getImage/orig/logo-pldi-2026-transparent.png" alt="some text" width="200" height="100"></p><br/>        
   <p>• Artifact Evaluation Committee: <a href="https://pldi26.sigplan.org/committee/pldi-2026-pldi-research-artifacts-artifact-evaluation-committee" style="color: blue">link</a></p>
   </div>
