@@ -127,7 +127,7 @@
       <p><i>International Symposium on Code Generation and Optimization</i></p>
   <br/>
   <p><img src="./images/cgo.jpg" alt="some text" width="150" height="150"></p><br/>        
-    <!-- <p>• Letter of Recomendation: <a href="./pdf/1760583710438.pdf" style="color: blue">link</a></p> -->
+    <p>• Letter of Recomendation: <a href="./pdf/20260208-vinicius-da-silva-artifact-acknowledgement-letter.pdf" style="color: blue">link</a></p>
   </div>
   <hr/>
  <div class="project">
@@ -136,4 +136,12 @@
   <br/>
   <p><img src="https://upload.wikimedia.org/wikipedia/commons/8/8e/Association_for_Computing_Machinery_%28ACM%29_logo.svg" alt="some text" width="130" height="130"></p><br/>        
   <p>• Artifact Evaluation Committee: <a href="https://conf.researchr.org/committee/CC-2026/CC-2026-artifact-evaluation-committee" style="color: blue">link</a></p>
+  </div>
+   <hr/>
+  <div class="project">
+      <h3 class="text">Artifact Evaluator - PLDI26</h3>
+      <p><i>Conference on Programming Language Design and Implementation</i></p>
+  <br/>
+  <p><img src="https://pldi26.sigplan.org/getImage/orig/logo-pldi-2026-transparent.png" alt="some text" width="130" height="130"></p><br/>        
+  <p>• Artifact Evaluation Committee: <a href="https://pldi26.sigplan.org/committee/pldi-2026-pldi-research-artifacts-artifact-evaluation-committee" style="color: blue">link</a></p>
   </div>
