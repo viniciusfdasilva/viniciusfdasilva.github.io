@@ -64,7 +64,7 @@
         contributing to the optimization of the Nanvix emulator’s performance.</p>
     
     <p>• Supervisor: <a href="https://www.microsoft.com/en-us/research/people/ppenna/" style="color: blue">Pedro Henrique Penna</a></p>
-    <p>• Letter of Recomendation: <a href="./pdf/1732116641794.pdf" style="color: blue">link</a></p>
+    <p>• Letter of Recommendation: <a href="./pdf/1732116641794.pdf" style="color: blue">link</a></p>
   </div>
   <hr/>
   <div class="project">
@@ -119,7 +119,7 @@
       <p><i>International Conference on Parallel Architecture and Compilation Techniques</i></p>
   <br/>
   <p><img src="./images/pact.png" alt="some text" width="90" height="90"></p><br/>        
-    <p>• Letter of Recomendation: <a href="./pdf/1760583710438.pdf" style="color: blue">link</a></p>
+    <p>• Letter of Recommendation: <a href="./pdf/1760583710438.pdf" style="color: blue">link</a></p>
   </div>
   <hr/>
   <div class="project">
@@ -127,7 +127,7 @@
       <p><i>International Symposium on Code Generation and Optimization</i></p>
   <br/>
   <p><img src="./images/cgo.jpg" alt="some text" width="150" height="150"></p><br/>        
-    <p>• Letter of Recomendation: <a href="./pdf/20260208-vinicius-da-silva-artifact-acknowledgement-letter.pdf" style="color: blue">link</a></p>
+    <p>• Letter of Recommendation: <a href="./pdf/20260208-vinicius-da-silva-artifact-acknowledgement-letter.pdf" style="color: blue">link</a></p>
   </div>
   <hr/>
  <div class="project">
