@@ -10,12 +10,17 @@
 * Programming Language Theory λ
 
 ---
+
 ### Current work
+
 <div style="text-align: justify">
+ 
 My master's research focuses on automatic generation of multi-language programs using L-systems. This research led to the development of <a href="https://benchgen.github.io/">BenchGen</a>, a multi-language benchmark generator based on L-systems. Currently, BenchGen generates programs in the following languages: C, C++, V, Zig, Julia, Odin, Go, and MLIR. For more information, please take a look at the <a href="https://arxiv.org/pdf/2512.17616">paper</a>.
 
 I also conduct research in the area of memory allocation for Constant-Bounded Programs, implemented in the <a href="https://github.com/lac-dcc/Marid">Marid</a> project, a memory allocator for MLIR.
 </div>
+
+---
 
 ## Previous work
 
