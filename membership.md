@@ -1,5 +1,5 @@
 ### Institute of Electrical and Electronics Engineers - Graduate Student Member
-<img src="https://viniciusfdasilva.github.io/images/ieee.jpg" width="220" height="120"><br/>
+<img src="https://viniciusfdasilva.github.io/images/ieee.jpg" width="270" height="120"><br/>
 <p style="text-align:justify;"><a href="https://viniciusfdasilva.github.io/pdf/MEMIEEE500.pdf">Membership certificate</a></p>
 
 ---
