@@ -39,9 +39,16 @@ I also conduct research in the area of memory allocation for Constant-Bounded Pr
 
 ## Recent News
 
+<img src="./images/linkedin.png" width="20" height="20">
+
 ---
 
-<img src="./images/linkedin.png" width="20" height="20">
+### Built a new language? Now give it a workout!.
+
+[see post]([https://www.linkedin.com/posts/compilers-lab_we-are-pleased-to-announce-that-a-pull-request-activity-7420086530687467520-lDcn?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q](https://www.linkedin.com/posts/testing-a-brand-new-language-is-tough-when-share-7453476046273839105-ktrX?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q))
+
+<img src="./images/1777047166927.jpeg">
+
 ---
 
 ### First PR accepted in Carbon! Adding support for `integer-to-char` conversion.
