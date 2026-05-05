@@ -43,9 +43,17 @@ I also conduct research in the area of memory allocation for Constant-Bounded Pr
 
 ---
 
+### BenchGen now Supports D Lang.
+
+[see post]([https://www.linkedin.com/posts/compilers-lab_matheus-marchesotti-has-added-support-to-activity-7457195429122695168-BpRW?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q](https://www.linkedin.com/posts/compilers-lab_matheus-marchesotti-has-added-support-to-activity-7457195429122695168-BpRW?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q))
+
+<img src="./images/1777933936881.jpeg">
+
+---
+
 ### Built a new language? Now give it a workout!.
 
-[see post]([https://www.linkedin.com/posts/compilers-lab_we-are-pleased-to-announce-that-a-pull-request-activity-7420086530687467520-lDcn?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q](https://www.linkedin.com/posts/testing-a-brand-new-language-is-tough-when-share-7453476046273839105-ktrX?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q))
+[see post](https://www.linkedin.com/posts/compilers-lab_we-are-pleased-to-announce-that-a-pull-request-activity-7420086530687467520-lDcn?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q](https://www.linkedin.com/posts/testing-a-brand-new-language-is-tough-when-share-7453476046273839105-ktrX?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q))
 
 <img src="./images/1777047166927.jpeg">
 
