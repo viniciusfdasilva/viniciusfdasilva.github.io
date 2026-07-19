@@ -43,6 +43,14 @@ I also conduct research in the area of memory allocation for Constant-Bounded Pr
 
 ---
 
+### The paper "Multi-Language Benchmark Generation via L-Systems" has been accepted for publication at the Brazilian Symposium on Programming Languages (SBLP 2026)
+
+[see post]([https://www.linkedin.com/posts/compilers-lab_programming-academia-research-activity-7484606591783202818-XPmg?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q](https://www.linkedin.com/posts/compilers-lab_programming-academia-research-activity-7484606591783202818-XPmg?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q))
+
+<img src="./images/1784469267317.jpeg">
+
+---
+
 ### BenchGen now Supports Pipefish.
 
 [see post]([https://www.linkedin.com/posts/compilers-lab_benchgen-now-supports-pipefish-this-is-activity-7475299060883591169-rlem?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q](https://www.linkedin.com/posts/compilers-lab_benchgen-now-supports-pipefish-this-is-activity-7475299060883591169-rlem?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q))
