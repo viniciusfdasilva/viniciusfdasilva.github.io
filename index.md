@@ -43,6 +43,14 @@ I also conduct research in the area of memory allocation for Constant-Bounded Pr
 
 ---
 
+### The paper "Memory Allocation for Constant-Bounded Programs" [1] is publicly available on arXiv
+
+[see post]([https://www.linkedin.com/posts/epbf-research-innovation-share-7495539420209790978-Yvh6/?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q](https://www.linkedin.com/posts/epbf-research-innovation-share-7495539420209790978-Yvh6/?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q))
+
+<img src="./images/1787075857500.jpeg">
+
+---
+
 ### The paper "Multi-Language Benchmark Generation via L-Systems" has been accepted for publication at the Brazilian Symposium on Programming Languages (SBLP 2026)
 
 [see post]([https://www.linkedin.com/posts/compilers-lab_programming-academia-research-activity-7484606591783202818-XPmg?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q](https://www.linkedin.com/posts/compilers-lab_programming-academia-research-activity-7484606591783202818-XPmg?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q))
