@@ -43,6 +43,22 @@ I also conduct research in the area of memory allocation for Constant-Bounded Pr
 
 ---
 
+### Vinicius Silva successfully defended his MSc project, "Multi-Language Benchmark Generation via L-Systems," on August 28, 2026, before a committee consisting of Xinliang (David) Li (Google) and Björn Franke (The University of Edinburgh).
+
+<a href="https://www.linkedin.com/posts/compilers-lab_vinicius-silva-successfully-defended-his-activity-7499178435840278528-X97h?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q">see post</a>
+
+<img src="./images/1787943466081.jpeg">
+
+---
+
+### Vinicius Silva will defend his Master's project, "Multi-Language Benchmark Generation via L-Systems", on August 28.
+
+<a href="https://www.linkedin.com/posts/compilers-lab_research-academia-fractal-activity-7497726185020424192-5x6g?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q">see post</a>
+
+<img src="./images/1787597222279.jpeg">
+
+---
+
 ### The paper "Memory Allocation for Constant-Bounded Programs" [1] is publicly available on arXiv
 
 <a href="https://www.linkedin.com/posts/epbf-research-innovation-share-7495539420209790978-Yvh6/?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q">see post</a>
