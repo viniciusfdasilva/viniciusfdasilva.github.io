@@ -118,7 +118,7 @@
       <h3 class="text">Artifact Evaluator - CGO27</h3>
       <p><i>International Symposium on Code Generation and Optimization</i></p>
   <br/>
-  <p><img src="./images/cgo.jpg" alt="some text" width="90" height="90"></p><br/>        
+  <p><img src="./images/cgo.jpg" alt="some text" width="150" height="150"></p><br/>           
   </div>
   <hr/>
   <div class="project">
