@@ -43,6 +43,14 @@ I also conduct research in the area of memory allocation for Constant-Bounded Pr
 
 ---
 
+### CHIP-8 using Rust PL
+
+<a href="https://www.linkedin.com/posts/viniciusfsilva_hi-guys-after-spending-the-last-two-years-activity-7500526152164290560-JYAi?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q">see post</a>
+
+<img src="./images/643925374-61e98c5f-9a2f-4e39-8055-be4b96783308.png">
+
+---
+
 ### Vinicius Silva successfully defended his MSc project, "Multi-Language Benchmark Generation via L-Systems," on August 28, 2026, before a committee consisting of Xinliang (David) Li (Google) and Björn Franke (The University of Edinburgh).
 
 <a href="https://www.linkedin.com/posts/compilers-lab_vinicius-silva-successfully-defended-his-activity-7499178435840278528-X97h?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q">see post</a>
