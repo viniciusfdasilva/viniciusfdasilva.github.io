@@ -8,7 +8,7 @@
 <div class="project">
     <h3 class="text"><a href="https://ufmg.br/">Universidade Federal de Minas Gerais - UFMG</a></h3>
     <p style="text-align: justify; text-justify: inter-word;">Master degree in Computer Science</p>
-    <p>Start year - October 2024</p>
+    <p>October 2024 - August 2026</p>
     <img width="150" heigth="150" src="https://dcc.ufmg.br/wp-content/uploads/PPGCC-Vertical_Colorida-Uso-Fundo-Claro.png">
      <img width="150" heigth="150" src="https://upload.wikimedia.org/wikipedia/commons/2/2d/Symbolfumg.jpg">
     <img width="150" heigth="150" src="https://lattes.dcc.ufmg.br/Logo-DCC.png">
