@@ -115,6 +115,13 @@
   <h3 class="text">Volunteering</h3>
   <hr/>
   <div class="project">
+      <h3 class="text">Artifact Evaluator - CGO27</h3>
+      <p><i>International Symposium on Code Generation and Optimization<</i></p>
+  <br/>
+  <p><img src="./images/cgo.jpb" alt="some text" width="90" height="90"></p><br/>        
+  </div>
+  <hr/>
+  <div class="project">
       <h3 class="text">Artifact Evaluator - PACT25</h3>
       <p><i>International Conference on Parallel Architecture and Compilation Techniques</i></p>
   <br/>
