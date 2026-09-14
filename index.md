@@ -54,9 +54,7 @@ I also conduct research in the area of memory allocation for Constant-Bounded Pr
 
 <a href="https://www.linkedin.com/posts/compilers-lab_the-paper-multi-language-benchmark-generation-activity-7504881085797924864-BNHQ?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q">see post</a>
 
-| | | |
-|---|---|---|
-| ![](./images/1789303083049.jpeg) | ![](./images/1789250125867.jpeg) | ![](./images/1789250125694.jpeg) |
+<img src="./images/1789303083049.jpeg">
 
 ---
 
@@ -64,7 +62,9 @@ I also conduct research in the area of memory allocation for Constant-Bounded Pr
 
 <a href="https://www.linkedin.com/posts/viniciusfsilva_sblp2026-cbsoft2026-academicresearch-activity-7504658965620989952-bpxc?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q">see post</a>
 
-<img src="./images/1789250125625.jpeg">
+| | | |
+|---|---|---|
+| ![](./images/1789250125625.jpeg) | ![](./images/1789250125867.jpeg) | ![](./images/1789250125694.jpeg) |
 
 ---
 
