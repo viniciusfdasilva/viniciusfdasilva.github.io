@@ -42,17 +42,17 @@ I also conduct research in the area of memory allocation for Constant-Bounded Pr
 <img src="./images/linkedin.png" width="20" height="20">
 
 ---
-### CHIP-8 using Rust PL
+### The Brazilian Conference on Software: Practice and Theory (CBSoft) has come to an end!
 
-<a href="">see post</a>
+<a href="https://www.linkedin.com/posts/compilers-lab_the-brazilian-conference-on-software-practice-activity-7504299513814355968-xmyS?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q">see post</a>
 
 <img src="./images/1789164426379.jpeg">
 
 ---
 
-### CHIP-8 using Rust PL
+### The paper "Multi-Language Benchmark Generation via L-Systems," by Vinicius Silva et al., won the Second Best Paper Award at the 30th Brazilian Symposium on Programming Languages.
 
-<a href="">see post</a>
+<a href="https://www.linkedin.com/posts/compilers-lab_the-paper-multi-language-benchmark-generation-activity-7504881085797924864-BNHQ?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q">see post</a>
 
 <img src="./images/1789303083049.jpeg">
 
