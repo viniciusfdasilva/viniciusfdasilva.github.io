@@ -58,9 +58,9 @@ I also conduct research in the area of memory allocation for Constant-Bounded Pr
 
 ---
 
-### CHIP-8 using Rust PL
+### I was at the Brazilian Conference on Software (CBSoft 2026) in São Paulo at USP
 
-<a href="">see post</a>
+<a href="https://www.linkedin.com/posts/viniciusfsilva_sblp2026-cbsoft2026-academicresearch-activity-7504658965620989952-bpxc?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q">see post</a>
 
 <img src="./images/1789250125625.jpeg">
 
