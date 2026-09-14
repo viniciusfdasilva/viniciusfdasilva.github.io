@@ -42,6 +42,29 @@ I also conduct research in the area of memory allocation for Constant-Bounded Pr
 <img src="./images/linkedin.png" width="20" height="20">
 
 ---
+### CHIP-8 using Rust PL
+
+<a href="">see post</a>
+
+<img src="./images/1789164426379.jpeg">
+
+---
+
+### CHIP-8 using Rust PL
+
+<a href="">see post</a>
+
+<img src="./images/1789303083049.jpeg">
+
+---
+
+### CHIP-8 using Rust PL
+
+<a href="">see post</a>
+
+<img src="./images/1789250125625.jpeg">
+
+---
 
 ### CHIP-8 using Rust PL
 
