@@ -1,3 +1,8 @@
+### Brazilian Computer Society - Graduate Student Member
+<img src="./images/sbc.jpeg" width="150" height="150"><br/>
+
+---
+
 ### Institute of Electrical and Electronics Engineers - Graduate Student Member
 <img src="https://viniciusfdasilva.github.io/images/ieee.jpg" width="310" height="120"><br/>
 <p style="text-align:justify;"><a href="https://viniciusfdasilva.github.io/pdf/MEMIEEE500.pdf">Membership certificate</a></p>
