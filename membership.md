@@ -1,5 +1,5 @@
 ### Brazilian Computer Society - Graduate Student Member
-<img src="./images/sbc.jpeg" width="50" height="200"><br/>
+<img src="./images/sbc.jpeg" width="80" height="100"><br/>
 
 ---
 
