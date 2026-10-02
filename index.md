@@ -42,6 +42,13 @@ I also conduct research in the area of memory allocation for Constant-Bounded Pr
 <img src="./images/linkedin.png" width="20" height="20">
 
 ---
+### LaC Day - First Edition
+
+<a href="https://www.linkedin.com/posts/compilers-lab_on-october-8th-2026-100-pm-430-pm-activity-7510399576827285504-VPha?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q">see post</a>
+
+<img src="./images/1790618794394.jpeg">
+
+---
 ### The Brazilian Conference on Software: Practice and Theory (CBSoft) has come to an end!
 
 <a href="https://www.linkedin.com/posts/compilers-lab_the-brazilian-conference-on-software-practice-activity-7504299513814355968-xmyS?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q">see post</a>
