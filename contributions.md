@@ -6,7 +6,7 @@
 
 ### Carbon Programming Language
 <img src="https://viniciusfdasilva.github.io/images/Carbon_logo.png" width="50" height="50"><br/>
-<p style="text-align:justify;"><a href="https://github.com/carbon-language/carbon-lang/pulls?q=is\%3Apr+state\%3Aclosed+author\%3Aviniciusfdasilva">View on GitHubt</a></p>
+<p style="text-align:justify;"><a href="https://github.com/carbon-language/carbon-lang/pulls?q=is\%3Apr+state\%3Aclosed+author\%3Aviniciusfdasilva">View on GitHub</a></p>
 
 ---
 
