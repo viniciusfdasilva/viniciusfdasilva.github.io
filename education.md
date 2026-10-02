@@ -36,7 +36,6 @@
     <h3 class="text"><a href="https://ufmg.br/">Universidade Federal de Minas Gerais - UFMG</a></h3>
     <p style="text-align: justify; text-justify: inter-word;">Course - Special Topics in Computer Science (Static Program Analysis)</p>
     <p>Conclusion year - July 2024</p>
-    <img width="150" heigth="150" src="https://rep.silvavinicius.com.br/assets/img/Logo_UFMG.png">
 </div>
 </div>
 
