@@ -2,14 +2,14 @@
 
 ### BenchGen
 <p>Multi-Language Benchmark Generator.</p>
-<img src="https://viniciusfdasilva.github.io/images/benchgen.png" width="80" height="80"><br/>
+<img src="https://viniciusfdasilva.github.io/images/benchgen.png" width="160" height="160"><br/>
 <p style="text-align:justify;"><a href="https://github.com/lac-dcc/BenchGen/">View on GitHub</a></p>
 
 ---
 
 ## Symphony
 <p>MLIR dialect for audio effects and synthesizers.</p>
-<img src="https://viniciusfdasilva.github.io/images/symphony_white.png" width="80" height="80"><br/>
+<img src="https://viniciusfdasilva.github.io/images/symphony_white.png" width="200" height="140"><br/>
 <p style="text-align:justify;"><a href="https://github.com/lac-dcc/Symphony/">View on GitHub</a></p>
 
 ## Contributor
