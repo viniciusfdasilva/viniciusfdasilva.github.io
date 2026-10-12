@@ -1,3 +1,19 @@
+## Maintainer
+
+### BenchGen
+<p>Multi-Language Benchmark Generator.</p>
+<img src="https://viniciusfdasilva.github.io/images/benchgen.png" width="50" height="50"><br/>
+<p style="text-align:justify;"><a href="https://github.com/lac-dcc/BenchGen/">View on GitHub</a></p>
+
+---
+
+## Symphony
+<p>MLIR dialect for audio effects and synthesizers.</p>
+<img src="https://viniciusfdasilva.github.io/images/symphony.png" width="50" height="50"><br/>
+<p style="text-align:justify;"><a href="https://github.com/lac-dcc/Symphony/">View on GitHub</a></p>
+
+## Contributor
+
 ### V Programming Language
 <img src="https://viniciusfdasilva.github.io/images/v-logo.png" width="50" height="50"><br/>
 <p style="text-align:justify;"><a href="https://github.com/vlang/v/pulls?q=is%3Apr+state%3Aclosed+author%3Aviniciusfdasilva+is%3Amerged">View on GitHub</a></p>
