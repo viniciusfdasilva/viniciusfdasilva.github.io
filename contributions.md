@@ -9,7 +9,7 @@
 
 ## Symphony
 <p>MLIR dialect for audio effects and synthesizers.</p>
-<img src="https://viniciusfdasilva.github.io/images/symphony_white.png" width="300" height="170"><br/>
+<img src="https://viniciusfdasilva.github.io/images/symphony_white.png" width="360" height="170"><br/>
 <p style="text-align:justify;"><a href="https://github.com/viniciusfdasilva/Symphony/">View on GitHub</a></p>
 
 ## Contributor
