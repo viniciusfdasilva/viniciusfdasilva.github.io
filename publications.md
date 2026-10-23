@@ -8,18 +8,8 @@
 
 ---
 
-<a href="./pdf/BenchGen.pdf"><img src="./images/pdf.png" width="40" height="40"></a><br/>
-<p style="text-align:justify;">V. F. da Silva, F. M. Q. Pereira. <i>Benchmark Generation via L-Systems (Short Technical Report)</i>. Universidade Federal de Minas Gerais (UFMG), Brazil, 2025.</p>
+<a href="./pdf/BenchGen.pdf"><img src="./images/pdf.png" width="40" height="40"></a><a href="./pdf/BenchGen.pdf"><img src="./images/award.png" width="40" height="40"></a><br/>
+<p style="text-align:justify;">V. F. da Silva, M. M. Ferraz, F. M. Q. Pereira. <i>Multi-Language Benchmark Generation via L-Systems</i>. In: Proceedings of the 30th Brazilian Symposium on Programming Languages (SBLP 2026), São Paulo, SP, Brazil, 2026, pp. 10–19. SBC. DOI: <a href="https://doi.org/10.5753/sblp.2026.27598">10.5753/sblp.2026.27598</a>.</p>
 
 ---
 
-<a href="./pdf/BenchGen_PT.pdf"><img src="./images/pdf.png" width="40" height="40"></a><br/>
-<p style="text-align:justify;">V. F. da Silva, L. V. da S. Costa, M. A. Souza, B. P. Baêta, and F. M. Q. Pereira. <i>Geração de Benchmarks via Sistemas L (Relatório Técnico)</i>. Universidade Federal de Minas Gerais (UFMG) and Pontifícia Universidade Católica de Minas Gerais (PUC Minas), Belo Horizonte, Brazil, 2025.</p>
-
----
-
-<a href="https://bib.pucminas.br/pergamumweb/download/52560A87-8CEC-497F-B7ED-E0F14ECF1740.pdf"><img src="./images/pdf.png" width="40" height="40"></a><br/>
-<p style="text-align:justify;">V. F. da Silva. <i>Maximizando a Eficiência na Comunicação entre Processos: Explorando uma Abstração de Zero-Cópia</i>. Pontifícia Universidade Católica de Minas Gerais (PUC Minas), Belo Horizonte, Brazil, 2024.</p>
-
-
----
