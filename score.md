@@ -2,8 +2,8 @@
 
 ---
 
-<a href="./pdf/angels_we_have_heard_on_high.pdf"><img src="./images/sheet.png" width="40" height="40"></a><br/>
-<p style="text-align:justify;">Angels We Have Heard On High</p>
+<a href="./pdf/angels_we_have_heard_on_high.pdf"><img src="./images/sheet.png" width="60" height="60"></a><br/>
+<p style="text-align:justify;">Angels We Have Heard On High - Composer: Unknown, Arrangement by: Vinicius Silva</p>
 
 ---
 
