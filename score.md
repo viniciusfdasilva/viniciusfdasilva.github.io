@@ -10,6 +10,6 @@
 
 <h2 style="text-align:justify;">O Come, All Ye Faithful</h2>
 <a href="./pdf/adeste_fideles.pdf"><img src="./images/sheet.png" width="60" height="60"></a><br/>
-<p style="text-align:justify;"><span>Composer: John Francis Wade</span></br><span>Arrangement by: Vinicius F. da Silva</span></p>
+<p style="text-align:justify;"><span>Composer: John Francis Wade</span> </br> <span>Arrangement by: Vinicius F. da Silva</span></p>
 
 ---
