@@ -42,11 +42,19 @@ I also conduct research in the area of memory allocation for Constant-Bounded Pr
 <img src="./images/linkedin.png" width="20" height="20">
 
 ---
+
 ### LaC Day - First Edition
+
+<a href="https://lnkd.in/p/ddjX6FMq">see post</a>
+
+<img src="./images/1790618794394.jpeg">
+
+---
+### The Proceedings of the 30th Brazilian Symposium on Programming Languages (SBLP'26) are now publicly available through the Open Library of the Brazilian Computer Society.
 
 <a href="https://www.linkedin.com/posts/compilers-lab_on-october-8th-2026-100-pm-430-pm-activity-7510399576827285504-VPha?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q">see post</a>
 
-<img src="./images/1790618794394.jpeg">
+<img src="./images/1794074502044.jpeg">
 
 ---
 ### The Brazilian Conference on Software: Practice and Theory (CBSoft) has come to an end!
