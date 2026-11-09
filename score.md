@@ -13,3 +13,7 @@
 <p style="text-align:justify;"><span>Composer: John Francis Wade</span><br/><span>Arrangement by: Vinicius F. da Silva</span></p>
 
 ---
+
+<h2 style="text-align:justify;">Nearer My God To Thee</h2>
+<a href="./pdf/nearer_my_god_to_thee.pdf"><img src="./images/sheet.png" width="60" height="60"></a><br/>
+<p style="text-align:justify;"><span>Composer: Sarah Flower Adams</span><br/><span>Arrangement by: Vinicius F. da Silva</span></p>
