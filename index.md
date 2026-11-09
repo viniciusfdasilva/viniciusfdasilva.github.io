@@ -50,6 +50,13 @@ I also conduct research in the area of memory allocation for Constant-Bounded Pr
 <img src="./images/1794074502044.jpeg">
 
 ---
+### Would you like to compose music in MLIR? Try Symphony! It's Vinicius Silva's out-of-tree MLIR dialect for audio effects and synthesizers.
+<a href="https://lnkd.in/p/dpqCzG5z">see post</a>
+
+<img src="./images/1791898153421.jpeg">
+
+
+---
 ### LaC Day - First Edition
 
 <a href="https://www.linkedin.com/posts/compilers-lab_on-october-8th-2026-100-pm-430-pm-activity-7510399576827285504-VPha?utm_source=share&utm_medium=member_desktop&rcm=ACoAACSrPnkB6N0_TvgJ615gZ93lEQ8n_zD3p2Q">see post</a>
