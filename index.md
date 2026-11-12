@@ -43,6 +43,14 @@ I also conduct research in the area of memory allocation for Constant-Bounded Pr
 
 ---
 
+### Symphony supporting different waveforms!
+
+<a href="https://lnkd.in/p/djrj9w5K">see post</a>
+
+<img src="./images/1794360171715.jpeg">
+
+---
+
 ### The Proceedings of the 30th Brazilian Symposium on Programming Languages (SBLP'26) are now publicly available through the Open Library of the Brazilian Computer Society.
 
 <a href="https://lnkd.in/p/ddjX6FMq">see post</a>
