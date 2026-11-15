@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Poliritmos geométricos</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f6f5f1;--fg:#1d1d1b;--muted:#6b6a64;--card:#fff;--line:#d9d6cc;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17171a;--fg:#ecebe6;--muted:#9a99a2;--card:#222227;--line:#3a3a42;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#17171a;--fg:#ecebe6;--muted:#9a99a2;--card:#222227;--line:#3a3a42;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:560px;margin:0 auto;padding:20px 16px 32px}
+h1{font-size:1.35rem;margin:0 0 4px}
+p.sub{margin:0 0 16px;color:var(--muted);font-size:.92rem}
+canvas{display:block;width:100%;max-width:100%;aspect-ratio:1;background:var(--card);border:1px solid var(--line);border-radius:16px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:14px}
+label{font-size:.85rem;color:var(--muted)}
+input[type=text],input[type=number]{background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;min-width:0}
+input[type=text]{flex:1}
+input[type=number]{width:64px}
+input[type=range]{flex:1;min-width:120px}
+button{background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font:inherit;cursor:pointer}
+button.play{background:var(--fg);color:var(--bg);border-color:var(--fg);font-weight:600;min-width:96px}
+.legend{display:flex;flex-direction:column;gap:4px;margin-top:14px;font-size:.9rem}
+.legend span i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px}
+.legend small{color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+<h1>Poliritmos geométricos</h1>
+<p class="sub">Cada camada com <b>x</b> pulsos vira um polígono de <b>x</b> vértices. Todas dividem o mesmo ciclo, e cada vértice acende e soa quando o seu pulso acontece.</p>
+<canvas id="cv"></canvas>
+
+<div class="row">
+  <button class="play" id="play">▶ Tocar</button>
+  <label for="cycle">Ciclo:</label>
+  <input type="range" id="cycle" min="1" max="12" step="0.5" value="4">
+  <span id="cycleVal">4 s</span>
+</div>
+<div class="row">
+  <label for="pulses">Pulsos por camada:</label>
+  <input type="text" id="pulses" value="3,4" inputmode="numeric" placeholder="ex.: 3,4,5">
+</div>
+<div class="row">
+  <button data-p="2,3">2:3</button><button data-p="3,4">3:4</button><button data-p="4,5">4:5</button><button data-p="3,4,5">3:4:5</button>
+  <label for="n">1 até n:</label><input type="number" id="n" min="1" max="8" value="5"><button id="gen">Gerar</button>
+</div>
+<div class="legend" id="legend"></div>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+const cv=$('#cv'),g=cv.getContext('2d');
+const FREQS=[261.6,329.6,392,523.3,659.3,784,1046.5,1318.5];
+let layers=[],playing=false,ctx=null,t0=0,cycle=4,timer=null;
+const hue=i=>(i*67+15)%360;
+
+function parse(){
+  const nums=$('#pulses').value.split(/[^0-9]+/).filter(Boolean).map(Number).filter(n=>n>=1&&n<=32);
+  return [...new Set(nums)].slice(0,8);
+}
+function apply(){
+  cycle=+$('#cycle').value;
+  $('#cycleVal').textContent=cycle+' s';
+  layers=parse().map((x,i)=>({x,i,next:0}));
+  $('#legend').innerHTML=layers.map(l=>
+    `<span><i style="background:hsl(${hue(l.i)} 70% 55%)"></i>${l.x} ${l.x===1?'pulso':'pulsos'} <small>(${l.x===1?'1 ponto':l.x===2?'1 reta':l.x+' vértices'} · ${(l.x*60/cycle).toFixed(1).replace('.0','')} bpm)</small></span>`
+  ).join('');
+  if(playing) start();
+}
+function start(){
+  ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();
+  ctx.resume();
+  t0=ctx.currentTime+0.1;
+  layers.forEach(l=>l.next=0);
+  clearInterval(timer);
+  timer=setInterval(sched,25);
+  playing=true;
+  $('#play').textContent='■ Parar';
+}
+function stop(){
+  clearInterval(timer);playing=false;
+  $('#play').textContent='▶ Tocar';
+}
+function click(t,l,accent){
+  const o=ctx.createOscillator(),a=ctx.createGain();
+  o.frequency.value=FREQS[l.i%8];
+  const v=accent?0.32:0.16;
+  a.gain.setValueAtTime(v,t);
+  a.gain.exponentialRampToValueAtTime(0.001,t+(accent?0.25:0.15));
+  o.connect(a).connect(ctx.destination);
+  o.start(t);o.stop(t+0.3);
+}
+function sched(){
+  const horizon=ctx.currentTime+0.12;
+  for(const l of layers){
+    while(true){
+      const t=t0+l.next*cycle/l.x;       // pulso k da camada: t0 + k·T/x
+      if(t>=horizon)break;
+      if(t>=ctx.currentTime-0.05)click(t,l,l.next%l.x===0);
+      l.next++;
+    }
+  }
+}
+function frame(){
+  const dpr=devicePixelRatio||1,w=cv.clientWidth;
+  if(w&&cv.width!==Math.round(w*dpr)){cv.width=cv.height=Math.round(w*dpr)}
+  g.setTransform(cv.width/w,0,0,cv.width/w,0,0);
+  g.clearRect(0,0,w,w);
+  const cs=getComputedStyle(document.documentElement);
+  const fg=cs.getPropertyValue('--fg').trim(),line=cs.getPropertyValue('--line').trim();
+  const c=w/2,R=w*0.42;
+  const now=playing?ctx.currentTime-t0:-1;
+  const live=now>=0,phase=live?now/cycle:0;
+
+  g.strokeStyle=line;g.lineWidth=1;
+  g.beginPath();g.arc(c,c,R,0,Math.PI*2);g.stroke();
+  g.beginPath();g.moveTo(c,c-R-6);g.lineTo(c,c-R+6);g.stroke();
+
+  const step=Math.min(0.12,0.6/Math.max(layers.length,1));
+  layers.forEach((l,i)=>{
+    const r=R*(1-i*step),col=`hsl(${hue(l.i)} 70% 55%)`;
+    const pts=[];
+    for(let k=0;k<l.x;k++){const a=-Math.PI/2+2*Math.PI*k/l.x;pts.push([c+r*Math.cos(a),c+r*Math.sin(a)])}
+    if(l.x>=2){
+      g.strokeStyle=col;g.globalAlpha=.75;g.lineWidth=2;g.lineJoin='round';
+      g.beginPath();pts.forEach((p,k)=>k?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));
+      if(l.x>=3)g.closePath();
+      g.stroke();g.globalAlpha=1;
+    }
+    pts.forEach((p,k)=>{
+      let f=0;
+      if(live){const d=(((phase-k/l.x)%1)+1)%1*cycle;if(d<0.5)f=Math.exp(-d*7)}
+      if(f>0.02){g.globalAlpha=f*.6;g.strokeStyle=col;g.lineWidth=2;g.beginPath();g.arc(p[0],p[1],7+22*f,0,Math.PI*2);g.stroke();g.globalAlpha=1}
+      g.fillStyle=col;g.beginPath();g.arc(p[0],p[1],(k===0?6:4.5)+9*f,0,Math.PI*2);g.fill();
+      if(k===0){g.strokeStyle=fg;g.lineWidth=1.5;g.beginPath();g.arc(p[0],p[1],(6+9*f)+3,0,Math.PI*2);g.stroke()}
+    });
+  });
+
+  if(live){
+    const a=-Math.PI/2+2*Math.PI*(phase%1);
+    g.strokeStyle=fg;g.globalAlpha=.35;g.lineWidth=1.5;
+    g.beginPath();g.moveTo(c,c);g.lineTo(c+R*Math.cos(a),c+R*Math.sin(a));g.stroke();
+    g.globalAlpha=1;g.fillStyle=fg;g.beginPath();g.arc(c+R*Math.cos(a),c+R*Math.sin(a),3,0,Math.PI*2);g.fill();
+  }
+  requestAnimationFrame(frame);
+}
+
+$('#play').onclick=()=>playing?stop():start();
+$('#cycle').oninput=apply;
+$('#pulses').onchange=apply;
+$('#pulses').onkeydown=e=>{if(e.key==='Enter')apply()};
+document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{$('#pulses').value=b.dataset.p;apply()});
+$('#gen').onclick=()=>{
+  const n=Math.max(1,Math.min(8,+$('#n').value||1));
+  $('#pulses').value=Array.from({length:n},(_,i)=>i+1).join(',');
+  apply();
+};
+apply();frame();
+</script>
+</body>
+</html>
