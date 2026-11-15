@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Afinador</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f6f5f1;--fg:#1d1d1b;--muted:#6b6a64;--card:#fff;--line:#d9d6cc;--ok:#2f9e44;--warn:#d9480f;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17171a;--fg:#ecebe6;--muted:#9a99a2;--card:#222227;--line:#3a3a42;--ok:#51cf66;--warn:#ff8c4d;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#17171a;--fg:#ecebe6;--muted:#9a99a2;--card:#222227;--line:#3a3a42;--ok:#51cf66;--warn:#ff8c4d;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:480px;margin:0 auto;padding:20px 16px 32px}
+h1{font-size:1.35rem;margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+svg{display:block;width:100%;height:auto}
+.tick{stroke:var(--muted);stroke-width:1.5}
+.lbl{fill:var(--muted);font-size:11px;text-anchor:middle}
+.arc{fill:none;stroke:var(--line);stroke-width:2}
+.zone{fill:none;stroke:var(--ok);stroke-width:6;stroke-linecap:round}
+#needle{stroke:var(--fg);stroke-width:3;stroke-linecap:round}
+#hub{fill:var(--fg)}
+.on #needle{stroke:var(--ok)}.on #hub{fill:var(--ok)}
+.read{text-align:center;margin-top:4px}
+#note{font-size:4rem;font-weight:700;line-height:1;transition:color .15s}
+#note.ok{color:var(--ok)}
+#oct{font-size:1.4rem;color:var(--muted);margin-left:4px}
+#info{color:var(--muted);font-variant-numeric:tabular-nums;margin-top:6px;min-height:1.5em}
+#status{font-weight:600;min-height:1.5em;margin-top:2px}
+#status.ok{color:var(--ok)}#status.bad{color:var(--warn)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:14px}
+label{font-size:.85rem;color:var(--muted)}
+select,input[type=number]{background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit}
+input[type=number]{width:84px}
+button{background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font:inherit;cursor:pointer}
+button.main{background:var(--fg);color:var(--bg);border-color:var(--fg);font-weight:600;flex:1;padding:12px;font-size:1.05rem}
+h2{font-size:.95rem;margin:20px 0 0;color:var(--muted);font-weight:600}
+.hint{color:var(--muted);font-size:.8rem;margin:14px 0 0}
+</style>
+</head>
+<body>
+<main>
+<h1>Afinador</h1>
+<div class="card">
+  <svg id="gauge" viewBox="-20 0 340 165" role="img" aria-label="Medidor de afinação">
+    <path class="arc" d="M46.08 90 A120 120 0 0 1 253.92 90"/>
+    <path class="zone" d="M137.46 30.66 A120 120 0 0 1 162.54 30.66"/>
+    <g id="ticks"></g>
+    <line id="needle" x1="150" y1="150" x2="150" y2="38" transform="rotate(0 150 150)"/>
+    <circle id="hub" cx="150" cy="150" r="7"/>
+  </svg>
+  <div class="read">
+    <div><span id="note">–</span><span id="oct"></span></div>
+    <div id="info">Toque uma nota perto do microfone</div>
+    <div id="status"></div>
+  </div>
+  <div class="row"><button class="main" id="mic">🎤 Ligar microfone</button></div>
+  <div class="row"><label for="a4">Lá central (A4)</label><input type="number" id="a4" min="400" max="480" value="440"><label>Hz</label></div>
+
+  <h2>Tons de referência</h2>
+  <div class="row"><select id="inst" aria-label="Instrumento"></select></div>
+  <div class="row" id="strings"></div>
+  <p class="hint">O navegador pede permissão para usar o microfone, e isso só funciona em páginas com HTTPS. Nada é gravado nem enviado: o áudio é analisado no seu próprio aparelho.</p>
+</div>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+const NAMES=['Dó','Dó♯','Ré','Ré♯','Mi','Fá','Fá♯','Sol','Sol♯','Lá','Lá♯','Si'];
+const LETTERS=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+const INST={
+  'Violão':[40,45,50,55,59,64],
+  'Baixo (4 cordas)':[28,33,38,43],
+  'Cavaquinho':[50,55,59,62],
+  'Ukulele':[67,60,64,69],
+  'Violino':[55,62,69,76]
+};
+let ctx=null,stream=null,an=null,buf=null,listening=false,lastRun=0,lastHit=0;
+let hist=[],target=0,shown=0,hasNote=false;
+
+const a4=()=>+$('#a4').value||440;
+const midiFreq=m=>a4()*Math.pow(2,(m-69)/12);
+const midiName=m=>NAMES[((m%12)+12)%12]+' ('+LETTERS[((m%12)+12)%12]+Math.floor(m/12-1)+')';
+
+// Escala do medidor
+(function(){
+  let h='';
+  for(let c=-50;c<=50;c+=10){
+    const a=c/50*60,major=c%50===0;
+    h+=`<line class="tick" x1="150" y1="30" x2="150" y2="${major?16:22}" transform="rotate(${a} 150 150)"/>`;
+    if(major){
+      const r=a*Math.PI/180;
+      h+=`<text class="lbl" x="${150+138*Math.sin(r)}" y="${150-138*Math.cos(r)+4}">${c>0?'+'+c:c}</text>`;
+    }
+  }
+  $('#ticks').innerHTML=h;
+})();
+
+// Detecção de altura (algoritmo YIN)
+function yin(x,sr){
+  const W=2048,tMin=Math.floor(sr/1500),tMax=Math.min(Math.floor(sr/60),W-1);
+  const d=new Float32Array(tMax+2),c=new Float32Array(tMax+2);
+  for(let t=1;t<=tMax;t++){
+    let s=0;
+    for(let j=0;j<W;j++){const v=x[j]-x[j+t];s+=v*v}
+    d[t]=s;
+  }
+  let run=0;c[0]=1;
+  for(let t=1;t<=tMax;t++){run+=d[t];c[t]=run?d[t]*t/run:1}
+  for(let t=Math.max(tMin,2);t<=tMax;t++){
+    if(c[t]<0.15){
+      while(t+1<=tMax&&c[t+1]<c[t])t++;
+      let tau=t;
+      if(t>1&&t<tMax){
+        const s0=c[t-1],s1=c[t],s2=c[t+1],den=2*(2*s1-s2-s0);
+        if(den)tau=t+(s2-s0)/den;
+      }
+      return sr/tau;
+    }
+  }
+  return -1;
+}
+
+function analyse(){
+  an.getFloatTimeDomainData(buf);
+  let e=0;for(let i=0;i<buf.length;i++)e+=buf[i]*buf[i];
+  if(Math.sqrt(e/buf.length)<0.01)return;
+  const f=yin(buf,ctx.sampleRate);
+  if(f<0)return;
+  hist.push(f);hist=hist.slice(-5);
+  const med=[...hist].sort((a,b)=>a-b)[hist.length>>1];
+  const m=69+12*Math.log2(med/a4()),near=Math.round(m),cents=(m-near)*100;
+  lastHit=performance.now();
+  if(!hasNote||Math.abs(cents-target)>40)shown=cents;
+  target=cents;hasNote=true;
+  const ok=Math.abs(cents)<=5;
+  $('#note').textContent=NAMES[((near%12)+12)%12];
+  $('#note').className=ok?'ok':'';
+  $('#oct').textContent=LETTERS[((near%12)+12)%12]+Math.floor(near/12-1);
+  $('#info').textContent=med.toFixed(1)+' Hz · '+(cents>0?'+':'')+cents.toFixed(0)+' cents';
+  $('#status').textContent=ok?'Afinado ✓':cents<0?'Grave: aperte a corda':'Agudo: afrouxe a corda';
+  $('#status').className=ok?'ok':'bad';
+  $('#gauge').classList.toggle('on',ok);
+}
+
+function frame(now){
+  if(listening){
+    if(now-lastRun>50){lastRun=now;analyse()}
+    if(hasNote&&now-lastHit>800){
+      hasNote=false;hist=[];target=0;
+      $('#note').textContent='–';$('#note').className='';$('#oct').textContent='';
+      $('#info').textContent='Toque uma nota perto do microfone';
+      $('#status').textContent='';$('#gauge').classList.remove('on');
+    }
+  }
+  shown+=((hasNote?target:0)-shown)*0.25;
+  const ang=Math.max(-65,Math.min(65,shown/50*60));
+  $('#needle').setAttribute('transform',`rotate(${ang} 150 150)`);
+  requestAnimationFrame(frame);
+}
+
+async function startMic(){
+  try{
+    ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();
+    await ctx.resume();
+    stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+    an=ctx.createAnalyser();an.fftSize=4096;
+    ctx.createMediaStreamSource(stream).connect(an);
+    buf=new Float32Array(an.fftSize);
+    listening=true;$('#mic').textContent='■ Desligar microfone';
+  }catch(err){
+    $('#info').textContent='Não foi possível acessar o microfone. Verifique a permissão e se a página usa HTTPS.';
+  }
+}
+function stopMic(){
+  if(stream)stream.getTracks().forEach(t=>t.stop());
+  listening=false;hasNote=false;hist=[];
+  $('#mic').textContent='🎤 Ligar microfone';
+  $('#note').textContent='–';$('#oct').textContent='';$('#status').textContent='';
+  $('#info').textContent='Microfone desligado';$('#gauge').classList.remove('on');
+}
+$('#mic').onclick=()=>listening?stopMic():startMic();
+
+// Tons de referência
+function tone(m){
+  ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();
+  ctx.resume();
+  const t=ctx.currentTime,o=ctx.createOscillator(),g=ctx.createGain();
+  o.type='triangle';o.frequency.value=midiFreq(m);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.35,t+0.03);
+  g.gain.exponentialRampToValueAtTime(0.001,t+2.5);
+  o.connect(g).connect(ctx.destination);o.start(t);o.stop(t+2.6);
+}
+function buildStrings(){
+  const arr=INST[$('#inst').value];
+  $('#strings').innerHTML='';
+  arr.forEach(m=>{
+    const b=document.createElement('button');
+    b.textContent=NAMES[m%12]+' '+LETTERS[m%12]+Math.floor(m/12-1);
+    b.title=midiName(m);b.onclick=()=>tone(m);
+    $('#strings').appendChild(b);
+  });
+}
+Object.keys(INST).forEach(k=>$('#inst').add(new Option(k,k)));
+$('#inst').onchange=buildStrings;
+buildStrings();requestAnimationFrame(frame);
+</script>
+</body>
+</html>
