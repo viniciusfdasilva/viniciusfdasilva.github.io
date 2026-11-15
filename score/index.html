@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jogo de partitura</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f6f5f1;--fg:#1d1d1b;--muted:#6b6a64;--card:#fff;--line:#d9d6cc;--ok:#2f9e44;--bad:#d9480f;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17171a;--fg:#ecebe6;--muted:#9a99a2;--card:#222227;--line:#3a3a42;--ok:#51cf66;--bad:#ff8c4d;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#17171a;--fg:#ecebe6;--muted:#9a99a2;--card:#222227;--line:#3a3a42;--ok:#51cf66;--bad:#ff8c4d;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:520px;margin:0 auto;padding:20px 16px 32px}
+h1{font-size:1.35rem;margin:0 0 14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+button,select{background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font:inherit;cursor:pointer}
+.tabs button.on{background:var(--fg);color:var(--bg);border-color:var(--fg);font-weight:600}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+label{font-size:.85rem;color:var(--muted)}
+svg{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:12px}
+#q{text-align:center;font-weight:600;margin:12px 0 8px}
+.ans{display:grid;grid-template-columns:repeat(auto-fit,minmax(64px,1fr));gap:8px}
+.ans button{padding:12px 4px;font-size:1.05rem}
+.ans button:disabled{opacity:.6}
+.keys{display:flex;gap:3px}
+.keys button{flex:1;min-width:0;padding:22px 0 8px;font-size:.7rem;border-radius:0 0 8px 8px}
+.keys button.sel{background:var(--fg);color:var(--bg)}
+#fb{text-align:center;min-height:1.6em;margin-top:10px;font-weight:600}
+#fb.ok{color:var(--ok)}#fb.bad{color:var(--bad)}
+#sc{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;color:var(--muted);font-size:.85rem;margin-top:12px;font-variant-numeric:tabular-nums}
+#sc button{padding:2px 8px;font-size:.8rem}
+.hide{display:none!important}
+#acc{display:flex;gap:8px;justify-content:center;margin-bottom:8px}
+#acc button{min-width:60px;font-size:1.15rem}
+#acc button.sel{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+</style>
+</head>
+<body>
+<main>
+<h1>Jogo de partitura</h1>
+<div class="card">
+  <div class="tabs" id="tabs">
+    <button data-m="ler" class="on">Ler notas</button>
+    <button data-m="ouvir">Ouvir</button>
+    <button data-m="fig">Figuras</button>
+    <button data-m="exp">Explorar</button>
+  </div>
+  <div class="row" id="opts">
+    <label for="clef">Clave</label>
+    <select id="clef"><option value="sol">Sol</option><option value="fa">Fá</option></select>
+    <label for="lvl" id="lvlL">Nível</label>
+    <select id="lvl"><option value="b">Dentro da pauta</option><option value="x">Com linhas suplementares</option></select>
+    <label for="key" id="keyL">Tom</label><select id="key"></select>
+  </div>
+  <div id="stage"></div>
+  <div id="q"></div>
+  <div id="acc" class="hide"></div>
+  <div class="ans" id="ans"></div>
+  <div id="fb"></div>
+  <div id="sc"><span id="scT"></span><button id="rst">Zerar</button></div>
+</div>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+const NM=['Dó','Ré','Mi','Fá','Sol','Lá','Si'],SEMI=[0,2,4,5,7,9,11];
+const BASE={sol:30,fa:18};   // índice diatônico da linha inferior (Mi4 / Sol2)
+const SH=[3,0,4,1,5,2,6],FL=[6,2,5,1,4,0,3];   // ordem dos sustenidos e bemóis (índice da nota)
+const KP={sol:{s:[8,5,9,6,3,7,4],f:[4,7,3,6,2,5,1]},fa:{s:[6,3,7,4,1,5,2],f:[2,5,1,4,0,3,6]}};  // posição na pauta
+const ACS={'-1':'♭','0':'','1':'♯'};
+const keyN=()=>+$('#key').value;
+const keyAcc=l=>{const n=keyN();return n>0&&SH.slice(0,n).includes(l)?1:n<0&&FL.slice(0,-n).includes(l)?-1:0};
+const FIGS=[['Semibreve','vale 4 tempos','w'],['Mínima','vale 2 tempos','h'],['Semínima','vale 1 tempo','q'],['Colcheia','vale ½ tempo','e'],['Semicolcheia','vale ¼ de tempo','s']];
+let selAcc=0,mode='ler',cur=null,locked=false,sc={ok:0,tot:0,st:0,best:0},ctx=null,timer=null;
+const rand=n=>Math.floor(Math.random()*n);
+const clef=()=>$('#clef').value;
+
+function play(d,acc=0){
+  ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();ctx.resume();
+  const m=12*(Math.floor(d/7)+1)+SEMI[d%7]+acc,t=ctx.currentTime,o=ctx.createOscillator(),g=ctx.createGain();
+  o.type='triangle';o.frequency.value=440*Math.pow(2,(m-69)/12);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.3,t+.02);g.gain.exponentialRampToValueAtTime(.001,t+1.2);
+  o.connect(g).connect(ctx.destination);o.start(t);o.stop(t+1.3);
+}
+
+function keySig(c,n){
+  let s='';const pos=KP[c][n>0?'s':'f'];
+  for(let i=0;i<Math.abs(n);i++)s+=`<text x="${66+i*11}" y="${98-pos[i]*6+7}" font-size="22" fill="var(--fg)" style="font-family:'Segoe UI Symbol','Apple Symbols',serif">${n>0?'♯':'♭'}</text>`;
+  return s;
+}
+// Desenha a pauta. o={d, dur, clef, col}
+function staff(o){
+  const c=o.clef||clef(),yB=98,X=170,K=o.col?`color:${o.col}`:'';
+  let s=`<svg viewBox="0 0 300 150" style="${K}" role="img" aria-label="Pauta musical"><g stroke="var(--fg)" stroke-width="1.3">`;
+  for(let i=0;i<5;i++)s+=`<line x1="10" x2="290" y1="${yB-i*12}" y2="${yB-i*12}"/>`;
+  s+=`</g><text x="16" y="${c==='sol'?102:76}" font-size="${c==='sol'?72:50}" fill="var(--fg)" style="font-family:'Noto Music','Segoe UI Symbol','Apple Symbols',serif">${c==='sol'?'𝄞':'𝄢'}</text>`+keySig(c,o.key||0);
+  if(o.d!=null){
+    const p=o.d-BASE[c],y=yB-p*6,dur=o.dur||'q',cl=o.col?'currentColor':'var(--fg)';
+    s+=`<g stroke="${cl}" stroke-width="1.6" fill="none">`;
+    for(let q=-2;q>=p;q-=2)s+=`<line x1="${X-12}" x2="${X+12}" y1="${yB-q*6}" y2="${yB-q*6}"/>`;
+    for(let q=10;q<=p;q+=2)s+=`<line x1="${X-12}" x2="${X+12}" y1="${yB-q*6}" y2="${yB-q*6}"/>`;
+    const filled=!['w','h'].includes(dur);
+    s+=`<ellipse cx="${X}" cy="${y}" rx="${dur==='w'?8:7}" ry="5" transform="rotate(-20 ${X} ${y})" fill="${filled?cl:'none'}" stroke-width="${filled?1:2.2}"/>`;
+    if(dur!=='w'){
+      const up=p<4,sx=up?X+6.5:X-6.5,ey=up?y-38:y+38,dir=up?1:-1;
+      s+=`<line x1="${sx}" x2="${sx}" y1="${y}" y2="${ey}"/>`;
+      if(dur==='e'||dur==='s')s+=`<path d="M${sx} ${ey} q 14 ${dir*8} 9 ${dir*24}"/>`;
+      if(dur==='s')s+=`<path d="M${sx} ${ey+dir*9} q 14 ${dir*8} 9 ${dir*24}"/>`;
+    }
+    s+='</g>';
+  }
+  return s+'</svg>';
+}
+const draw=o=>$('#stage').innerHTML=staff(o);
+
+function posText(p){
+  if(p<0||p>8)return 'linha suplementar'+(p%2===0?'':' (espaço fora da pauta)');
+  return p%2===0?`${p/2+1}ª linha`:`${(p+1)/2}º espaço`;
+}
+
+function scoreUI(){
+  $('#scT').textContent=`Acertos: ${sc.ok}/${sc.tot} · Sequência: ${sc.st} · Recorde: ${sc.best}`;
+}
+function buildAns(){
+  const names=mode==='fig'?FIGS.map(f=>f[0]):NM;
+  $('#ans').innerHTML=names.map((n,i)=>`<button data-i="${i}">${n}</button>`).join('');
+  $('#ans').querySelectorAll('button').forEach(b=>b.onclick=()=>answer(+b.dataset.i));
+}
+
+function next(){
+  clearTimeout(timer);locked=false;$('#fb').textContent='';$('#fb').className='';
+  $('#ans').querySelectorAll('button').forEach(b=>b.disabled=false);
+  if(mode==='fig'){
+    const i=rand(5);cur={fig:i};
+    draw({d:BASE.sol+4,dur:FIGS[i][2],clef:'sol'});$('#q').textContent='Qual é o nome desta figura?';
+  }else{
+    const [lo,hi]=$('#lvl').value==='b'?[0,8]:[-4,12];let p;
+    do p=lo+rand(hi-lo+1);while(cur&&cur.p===p);
+    cur={p,d:BASE[clef()]+p};
+    if(mode==='ouvir'){cur.acc=keyAcc(cur.d%7);selAcc=0;markAcc();draw({key:keyN()});play(cur.d,cur.acc);$('#q').innerHTML='Que nota você ouviu? <button id="again">🔊 Ouvir de novo</button>';$('#again').onclick=()=>play(cur.d,cur.acc)}
+    else{draw({d:cur.d});$('#q').textContent='Que nota é esta?'}
+  }
+}
+function answer(i){
+  if(locked)return;locked=true;
+  const oi=mode==='ouvir',ok=mode==='fig'?i===cur.fig:(i===cur.d%7&&(!oi||selAcc===cur.acc));
+  sc.tot++;if(ok){sc.ok++;sc.st++;sc.best=Math.max(sc.best,sc.st)}else sc.st=0;scoreUI();
+  const col=ok?'var(--ok)':'var(--bad)';
+  if(mode==='fig'){
+    draw({d:BASE.sol+4,dur:FIGS[cur.fig][2],clef:'sol',col});
+    $('#fb').textContent=(ok?'Certo! ':'Era ')+FIGS[cur.fig][0]+': '+FIGS[cur.fig][1];
+  }else{
+    const ac=oi?cur.acc:0;draw({d:cur.d,col,key:oi?keyN():0});play(cur.d,ac);
+    $('#fb').textContent=(ok?'Certo! ':'Era ')+NM[cur.d%7]+ACS[ac]+' ('+posText(cur.p)+')';
+  }
+  $('#fb').className=ok?'ok':'bad';
+  $('#ans').querySelectorAll('button').forEach(b=>b.disabled=true);
+  timer=setTimeout(next,ok?1000:2200);
+}
+
+function markAcc(){$('#acc').querySelectorAll('button').forEach(b=>b.classList.toggle('sel',+b.dataset.a===selAcc))}
+function buildAcc(){
+  $('#acc').innerHTML=[-1,0,1].map(a=>`<button data-a="${a}" aria-label="${a<0?'bemol':a>0?'sustenido':'natural'}">${a<0?'♭':a>0?'♯':'♮'}</button>`).join('');
+  $('#acc').querySelectorAll('button').forEach(b=>b.onclick=()=>{if(!locked){selAcc=+b.dataset.a;markAcc()}});
+}
+// Modo explorar: teclado de notas naturais
+function buildKeys(){
+  const lo=clef()==='sol'?28:14;
+  $('#ans').className='keys';$('#ans').innerHTML='';
+  for(let d=lo;d<lo+14;d++){
+    const b=document.createElement('button');
+    b.textContent=NM[d%7]+(d%7===0?Math.floor(d/7):'');b.title=NM[d%7]+Math.floor(d/7);
+    b.onclick=()=>{
+      $('#ans').querySelectorAll('button').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');
+      const p=d-BASE[clef()];draw({d});play(d);
+      $('#fb').className='';$('#fb').textContent=NM[d%7]+' (oitava '+Math.floor(d/7)+') · '+posText(p);
+    };
+    $('#ans').appendChild(b);
+  }
+}
+
+function setMode(m){
+  mode=m;clearTimeout(timer);cur=null;
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
+  $('#opts').classList.toggle('hide',m==='fig');
+  $('#lvl').classList.toggle('hide',m==='exp');['#key','#keyL'].forEach(q=>$(q).classList.toggle('hide',m!=='ouvir'));$('#acc').classList.toggle('hide',!(m==='ouvir'&&keyN()!==0));$('#lvlL').classList.toggle('hide',m==='exp');
+  $('#sc').classList.toggle('hide',m==='exp');
+  $('#fb').textContent='';$('#fb').className='';
+  $('#ans').className=m==='exp'?'keys':'ans';
+  if(m==='exp'){buildKeys();draw({});$('#q').textContent='Toque numa tecla para ver a nota na pauta e ouvir o som';}
+  else{buildAns();next()}
+}
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
+$('#clef').onchange=()=>setMode(mode);
+$('#lvl').onchange=()=>setMode(mode);
+$('#key').onchange=()=>setMode(mode);
+$('#rst').onclick=()=>{sc={ok:0,tot:0,st:0,best:0};scoreUI()};
+[[-6,'Sol♭'],[-5,'Ré♭'],[-4,'Lá♭'],[-3,'Mi♭'],[-2,'Si♭'],[-1,'Fá'],[0,'Dó'],[1,'Sol'],[2,'Ré'],[3,'Lá'],[4,'Mi'],[5,'Si'],[6,'Fá♯']]
+  .forEach(([n,t])=>$('#key').add(new Option(`${t} maior (${n?Math.abs(n)+(n>0?'♯':'♭'):'sem acidentes'})`,n,false,n===0)));
+buildAcc();scoreUI();setMode('ler');
+</script>
+</body>
+</html>
