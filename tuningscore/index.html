@@ -3,12 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script data-goatcounter="https://viniciusilva.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 <title>Assistente de violino</title>
 <style>
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
---bg:#f6f5f1;--fg:#1d1d1b;--muted:#6b6a64;--card:#fff;--line:#d9d6cc;--ok:#2f9e44;--mid:#c58a00;--bad:#d9480f;color-scheme:light}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17171a;--fg:#ecebe6;--muted:#9a99a2;--card:#222227;--line:#3a3a42;--ok:#51cf66;--mid:#ffd43b;--bad:#ff8c4d;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#17171a;--fg:#ecebe6;--muted:#9a99a2;--card:#222227;--line:#3a3a42;--ok:#51cf66;--mid:#ffd43b;--bad:#ff8c4d;color-scheme:dark}
+--bg:#f6f5f1;--fg:#1d1d1b;--muted:#6b6a64;--card:#fff;--line:#d9d6cc;--ok:#2f9e44;--mid:#e8590c;--bad:#e03131;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17171a;--fg:#ecebe6;--muted:#9a99a2;--card:#222227;--line:#3a3a42;--ok:#51cf66;--mid:#ff922b;--bad:#ff6b6b;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#17171a;--fg:#ecebe6;--muted:#9a99a2;--card:#222227;--line:#3a3a42;--ok:#51cf66;--mid:#ff922b;--bad:#ff6b6b;color-scheme:dark}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
@@ -32,6 +33,22 @@ h2{font-size:.95rem;margin:0 0 8px;color:var(--muted);font-weight:600}
 #fb p{margin:0 0 10px}
 #fb p:last-child{margin:0}
 .hint{color:var(--muted);font-size:.8rem;margin:0}
+#fb p{margin:0 0 10px}
+.score{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.big{font-size:3.4rem;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.big.g{color:var(--ok)}.big.y{color:var(--mid)}.big.r{color:var(--bad)}
+.bar{display:flex;height:16px;border-radius:999px;overflow:hidden;background:var(--line)}
+.bar i{display:block;height:100%}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 4px}
+.tile{border-radius:12px;padding:10px 4px;text-align:center;border:2px solid var(--line)}
+.tile b{display:block;font-size:1.8rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.tile span{display:block;font-size:.72rem;color:var(--muted);line-height:1.3}
+.tile .lb{font-size:.85rem;font-weight:600;color:var(--fg)}
+.tile.g{border-color:var(--ok)}.tile.g b{color:var(--ok)}
+.tile.y{border-color:var(--mid)}.tile.y b{color:var(--mid)}
+.tile.r{border-color:var(--bad)}.tile.r b{color:var(--bad)}
+.item{border-left:4px solid var(--line);padding:4px 0 4px 12px;margin:12px 0 0}
+.item.g{border-color:var(--ok)}.item.y{border-color:var(--mid)}.item.r{border-color:var(--bad)}
 .hide{display:none!important}
 </style>
 </head>
@@ -54,11 +71,11 @@ h2{font-size:.95rem;margin:0 0 8px;color:var(--muted);font-weight:600}
 <div class="card">
   <h2>Notas detectadas</h2>
   <div class="chips" id="chips"></div>
-  <p class="hint" style="margin-top:8px">Número = desvio em cêntimos (100 cêntimos = 1 semitom). Verde: até ±10. Amarelo: até ±25. Laranja: acima disso.</p>
+  <p class="hint" style="margin-top:8px">Cada nota aparece uma vez, com a variação em cêntimos durante ela (100 cêntimos = 1 semitom). A cor segue o valor típico: verde até ±10, laranja até ±25, vermelho acima disso.</p>
 </div>
 
 <div class="card" id="fbCard">
-  <h2>Feedback</h2>
+  <h2>Resultado</h2>
   <div id="fb"><p class="hint">Depois que você parar, o feedback aparece aqui.</p></div>
 </div>
 
@@ -92,20 +109,30 @@ function yin(x,sr){
   return -1;
 }
 
+function stats(nt){
+  const a=[...nt.s].sort((x,y)=>x-y),q=p=>a[Math.min(a.length-1,Math.floor(p*(a.length-1)))];
+  const mean=a.reduce((s,x)=>s+x,0)/a.length;
+  nt.med=q(.5);nt.lo=q(.05);nt.hi=q(.95);    // valor típico e intervalo de variação
+  nt.sd=Math.sqrt(a.reduce((s,x)=>s+(x-mean)**2,0)/a.length);
+}
 function closeNote(){
   if(!curr)return;
   const c=curr;curr=null;
   if(c.last-c.t0<0.1||c.c.length<3)return;
-  const a=c.c.slice(Math.floor(c.c.length*.15)).sort((x,y)=>x-y);   // ignora o ataque
-  const med=a[a.length>>1],mean=a.reduce((s,x)=>s+x,0)/a.length;
-  const sd=Math.sqrt(a.reduce((s,x)=>s+(x-mean)**2,0)/a.length);
-  notes.push({midi:c.midi,t0:c.t0,dur:c.last-c.t0,med,sd});
+  const smp=c.c.slice(Math.floor(c.c.length*.15)),prev=notes[notes.length-1];   // ignora o ataque
+  if(prev&&prev.midi===c.midi&&c.t0-prev.end<=0.3){      // mesma nota que continua: junta numa só
+    prev.s=prev.s.concat(smp);prev.end=c.last;prev.dur=prev.end-prev.t0;stats(prev);
+  }else{
+    const nt={midi:c.midi,t0:c.t0,end:c.last,dur:c.last-c.t0,s:smp};stats(nt);notes.push(nt);
+  }
   chips();
 }
+const sg=v=>(Math.round(v)>=0?'+':'−')+Math.abs(Math.round(v));
 function chips(){
   $('#chips').innerHTML=notes.map(n=>{
     const k=Math.abs(n.med)<=10?'g':Math.abs(n.med)<=25?'y':'r';
-    return `<span class="chip ${k}">${nm(n.midi)} ${n.med>=0?'+':''}${Math.round(n.med)}</span>`;
+    const r=Math.round(n.lo)===Math.round(n.hi)?sg(n.lo):sg(n.lo)+' a '+sg(n.hi);
+    return `<span class="chip ${k}">${nm(n.midi)} ${r}</span>`;
   }).join('');
 }
 function tick(){
@@ -150,38 +177,46 @@ function stop(){
 }
 
 function feedback(){
-  const n=notes.length,out=[];
+  const n=notes.length;
   if(n<2){$('#fb').innerHTML='<p>Não detectei notas suficientes. Toque com som firme, perto do microfone e em ambiente silencioso, e tente de novo.</p>';return}
-  const ok=notes.filter(x=>Math.abs(x.med)<=10).length;
+  const cls=x=>Math.abs(x.med)<=10?'g':Math.abs(x.med)<=25?'y':'r';
+  const cnt={g:0,y:0,r:0};notes.forEach(x=>cnt[cls(x)]++);
+  const pg=Math.round(100*cnt.g/n),py=Math.round(100*cnt.y/n),pr=Math.max(0,100-pg-py);
   const mean=notes.reduce((s,x)=>s+x.med,0)/n,abs=notes.reduce((s,x)=>s+Math.abs(x.med),0)/n;
-  out.push(`<b>Resumo:</b> ${n} notas detectadas, ${ok} dentro de ±10 cêntimos (${Math.round(100*ok/n)}%). Desvio médio: ${abs.toFixed(0)} cêntimos.`);
+  const grade=pg>=90?['Excelente','g']:pg>=75?['Muito bom','g']:pg>=50?['Bom, dá para melhorar','y']:['Precisa de atenção','r'];
+  const tile=(k,lb,rg,c,p)=>`<div class="tile ${k}"><b>${p}%</b><span class="lb">${lb}</span><span>${c} ${c===1?'nota':'notas'}<br>${rg}</span></div>`;
 
-  if(mean>8)out.push(`<b>Tendência:</b> no geral você está <b>alto</b> (cerca de +${mean.toFixed(0)} cêntimos). Tente recuar os dedos um pouco, na direção da voluta.`);
-  else if(mean<-8)out.push(`<b>Tendência:</b> no geral você está <b>baixo</b> (cerca de ${mean.toFixed(0)} cêntimos). Tente avançar os dedos um pouco, na direção do cavalete.`);
-  else out.push('<b>Tendência:</b> sem desvio geral para cima ou para baixo. Bom sinal.');
+  let h=`<div class="score"><div class="big ${grade[1]}">${pg}%</div><div><b>${grade[0]}</b><br><span class="hint">das ${n} notas estão afinadas<br>desvio médio: ${abs.toFixed(0)} cêntimos</span></div></div>`;
+  h+=`<div class="bar" role="img" aria-label="${pg}% afinadas, ${py}% quase, ${pr}% fora"><i style="width:${pg}%;background:var(--ok)"></i><i style="width:${py}%;background:var(--mid)"></i><i style="width:${pr}%;background:var(--bad)"></i></div>`;
+  h+=`<div class="tiles">${tile('g','Afinadas','até ±10 ¢',cnt.g,pg)}${tile('y','Quase','de ±10 a ±25 ¢',cnt.y,py)}${tile('r','Fora','acima de ±25 ¢',cnt.r,pr)}</div>`;
+
+  const items=[];
+  if(mean>8)items.push(['y',`<b>Tendência: alto</b> (cerca de +${mean.toFixed(0)} ¢). Tente recuar os dedos um pouco, na direção da voluta.`]);
+  else if(mean<-8)items.push(['y',`<b>Tendência: baixo</b> (cerca de ${mean.toFixed(0)} ¢). Tente avançar os dedos um pouco, na direção do cavalete.`]);
+  else items.push(['g','<b>Tendência:</b> sem desvio geral para cima ou para baixo.']);
 
   const worst=[...notes].filter(x=>Math.abs(x.med)>15).sort((a,b)=>Math.abs(b.med)-Math.abs(a.med)).slice(0,3);
-  if(worst.length)out.push('<b>Notas para revisar:</b> '+worst.map(x=>`${nm(x.midi)} (${x.med>0?'alta':'baixa'} ${Math.abs(x.med).toFixed(0)} ¢)`).join(', ')+'.');
+  if(worst.length)items.push([cls(worst[0]),'<b>Notas para revisar:</b> '+worst.map(x=>`${nm(x.midi)} (${x.med>0?'alta':'baixa'} ${Math.abs(x.med).toFixed(0)} ¢)`).join(', ')+'.']);
 
   const shaky=notes.filter(x=>x.sd>15&&x.dur>0.4).length;
-  if(shaky)out.push(`<b>Estabilidade:</b> ${shaky} ${shaky>1?'notas oscilaram':'nota oscilou'} bastante. Pode ser vibrato largo, arco irregular ou dedo inseguro. Experimente notas longas e retas, sem vibrato.`);
+  if(shaky)items.push(['y',`<b>Estabilidade:</b> ${shaky} ${shaky>1?'notas oscilaram':'nota oscilou'} bastante. Pode ser vibrato largo, arco irregular ou dedo inseguro. Experimente notas longas e retas, sem vibrato.`]);
 
   const mode=$('#mode').value;
   if(mode!=='free'){
     const t=+$('#ton').value,exp=SC[mode].map(i=>(t+i)%12),played=new Set(notes.map(x=>pc(x.midi)));
     const outside=[...new Set(notes.filter(x=>!exp.includes(pc(x.midi))).map(x=>NAMES[pc(x.midi)]))];
     const missing=exp.filter(p=>!played.has(p)).map(p=>NAMES[p]);
-    out.push(`<b>Escala de ${NAMES[t]} ${mode==='maj'?'maior':'menor natural'}:</b> `+
+    items.push([outside.length||missing.length?'y':'g',`<b>Escala de ${NAMES[t]} ${mode==='maj'?'maior':'menor natural'}:</b> `+
       (outside.length?`notas fora da escala: ${outside.join(', ')}. `:'todas as notas pertencem à escala. ')+
-      (missing.length?`Faltaram: ${missing.join(', ')}.`:'Todos os graus apareceram.'));
+      (missing.length?`Faltaram: ${missing.join(', ')}.`:'Todos os graus apareceram.')]);
+    if(n>=4){   // regularidade só faz sentido em escalas
+      const io=notes.slice(1).map((x,i)=>x.t0-notes[i].t0),m=io.reduce((s,x)=>s+x,0)/io.length;
+      const cv=Math.sqrt(io.reduce((s,x)=>s+(x-m)**2,0)/io.length)/m;
+      items.push(cv<0.2?['g','<b>Ritmo:</b> intervalos entre as notas bem regulares.']:['y',`<b>Ritmo:</b> o tempo entre as notas variou cerca de ${Math.round(cv*100)}%. Tente um metrônomo.`]);
+    }
   }
-
-  if(n>=4){
-    const io=notes.slice(1).map((x,i)=>x.t0-notes[i].t0),m=io.reduce((s,x)=>s+x,0)/io.length;
-    const cv=Math.sqrt(io.reduce((s,x)=>s+(x-m)**2,0)/io.length)/m;
-    out.push(cv<0.2?'<b>Ritmo:</b> intervalos entre as notas bem regulares.':`<b>Ritmo:</b> o tempo entre as notas variou cerca de ${Math.round(cv*100)}%. Tente um metrônomo.`);
-  }
-  $('#fb').innerHTML=out.map(p=>`<p>${p}</p>`).join('');
+  h+=items.map(([k,t])=>`<div class="item ${k}">${t}</div>`).join('');
+  $('#fb').innerHTML=h;
 }
 
 $('#rec').onclick=()=>rec?stop():start();
