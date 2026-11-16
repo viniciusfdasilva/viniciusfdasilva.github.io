@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Assistente de violino</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f6f5f1;--fg:#1d1d1b;--muted:#6b6a64;--card:#fff;--line:#d9d6cc;--ok:#2f9e44;--mid:#c58a00;--bad:#d9480f;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17171a;--fg:#ecebe6;--muted:#9a99a2;--card:#222227;--line:#3a3a42;--ok:#51cf66;--mid:#ffd43b;--bad:#ff8c4d;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#17171a;--fg:#ecebe6;--muted:#9a99a2;--card:#222227;--line:#3a3a42;--ok:#51cf66;--mid:#ffd43b;--bad:#ff8c4d;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:520px;margin:0 auto;padding:20px 16px 32px}
+h1{font-size:1.35rem;margin:0 0 4px}
+p.sub{margin:0 0 16px;color:var(--muted);font-size:.92rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+label{font-size:.85rem;color:var(--muted)}
+select,input[type=number]{background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit}
+input[type=number]{width:80px}
+button.main{background:var(--fg);color:var(--bg);border:1px solid var(--fg);border-radius:10px;padding:12px;font:inherit;font-weight:600;font-size:1.05rem;cursor:pointer;width:100%}
+button.main.rec{background:var(--bad);border-color:var(--bad);color:#fff}
+.live{text-align:center;margin:12px 0 4px}
+#cur{font-size:2.6rem;font-weight:700;line-height:1}
+#cents{color:var(--muted);font-variant-numeric:tabular-nums;min-height:1.4em}
+.chips{display:flex;flex-wrap:wrap;gap:6px;min-height:34px}
+.chip{border-radius:999px;padding:4px 10px;font-size:.85rem;font-variant-numeric:tabular-nums;border:2px solid var(--line)}
+.chip.g{border-color:var(--ok)}.chip.y{border-color:var(--mid)}.chip.r{border-color:var(--bad)}
+h2{font-size:.95rem;margin:0 0 8px;color:var(--muted);font-weight:600}
+#fb p{margin:0 0 10px}
+#fb p:last-child{margin:0}
+.hint{color:var(--muted);font-size:.8rem;margin:0}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+<main>
+<h1>Assistente de violino</h1>
+<p class="sub">Toque, e o assistente escuta e diz como foi a sua entonação.</p>
+
+<div class="card">
+  <div class="row">
+    <label for="mode">Exercício</label>
+    <select id="mode"><option value="free">Livre</option><option value="maj">Escala maior</option><option value="min">Escala menor natural</option></select>
+    <span id="tonW" class="hide"><label for="ton">Tônica</label> <select id="ton"></select></span>
+    <label for="a4">Lá =</label><input type="number" id="a4" min="400" max="480" value="440">
+  </div>
+  <button class="main" id="rec">🎻 Começar a ouvir</button>
+  <div class="live"><div id="cur">–</div><div id="cents">&nbsp;</div></div>
+</div>
+
+<div class="card">
+  <h2>Notas detectadas</h2>
+  <div class="chips" id="chips"></div>
+  <p class="hint" style="margin-top:8px">Número = desvio em cêntimos (100 cêntimos = 1 semitom). Verde: até ±10. Amarelo: até ±25. Laranja: acima disso.</p>
+</div>
+
+<div class="card" id="fbCard">
+  <h2>Feedback</h2>
+  <div id="fb"><p class="hint">Depois que você parar, o feedback aparece aqui.</p></div>
+</div>
+
+<p class="hint">A referência é o temperamento igual, o mesmo do afinador. Em música de cordas, terças maiores um pouco mais baixas (cerca de 14 cêntimos) também são aceitas. Funciona melhor em ambiente silencioso e com o microfone perto. O áudio é analisado no seu aparelho e não é gravado nem enviado.</p>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+const NAMES=['Dó','Dó♯','Ré','Ré♯','Mi','Fá','Fá♯','Sol','Sol♯','Lá','Lá♯','Si'];
+const nm=m=>NAMES[((m%12)+12)%12]+(Math.floor(m/12)-1);
+const pc=m=>((m%12)+12)%12;
+const SC={maj:[0,2,4,5,7,9,11],min:[0,2,3,5,7,8,10]};
+let ctx=null,an=null,buf=null,stream=null,rec=false,notes=[],curr=null,timer=null,t0=0;
+const a4=()=>+$('#a4').value||440;
+NAMES.forEach((n,i)=>$('#ton').add(new Option(n,i)));
+
+// Detecção de altura (YIN), faixa de violino: ~180 Hz a 2200 Hz
+function yin(x,sr){
+  const W=2048,tMin=Math.floor(sr/2200),tMax=Math.min(Math.floor(sr/180),W-1);
+  const d=new Float32Array(tMax+2),c=new Float32Array(tMax+2);
+  for(let t=1;t<=tMax;t++){let s=0;for(let j=0;j<W;j++){const v=x[j]-x[j+t];s+=v*v}d[t]=s}
+  let run=0;c[0]=1;
+  for(let t=1;t<=tMax;t++){run+=d[t];c[t]=run?d[t]*t/run:1}
+  for(let t=Math.max(tMin,2);t<=tMax;t++){
+    if(c[t]<0.15){
+      while(t+1<=tMax&&c[t+1]<c[t])t++;
+      let tau=t;
+      if(t>1&&t<tMax){const s0=c[t-1],s1=c[t],s2=c[t+1],den=2*(2*s1-s2-s0);if(den)tau=t+(s2-s0)/den}
+      return sr/tau;
+    }
+  }
+  return -1;
+}
+
+function closeNote(){
+  if(!curr)return;
+  const c=curr;curr=null;
+  if(c.last-c.t0<0.1||c.c.length<3)return;
+  const a=c.c.slice(Math.floor(c.c.length*.15)).sort((x,y)=>x-y);   // ignora o ataque
+  const med=a[a.length>>1],mean=a.reduce((s,x)=>s+x,0)/a.length;
+  const sd=Math.sqrt(a.reduce((s,x)=>s+(x-mean)**2,0)/a.length);
+  notes.push({midi:c.midi,t0:c.t0,dur:c.last-c.t0,med,sd});
+  chips();
+}
+function chips(){
+  $('#chips').innerHTML=notes.map(n=>{
+    const k=Math.abs(n.med)<=10?'g':Math.abs(n.med)<=25?'y':'r';
+    return `<span class="chip ${k}">${nm(n.midi)} ${n.med>=0?'+':''}${Math.round(n.med)}</span>`;
+  }).join('');
+}
+function tick(){
+  an.getFloatTimeDomainData(buf);
+  const now=(performance.now()-t0)/1000;
+  const need=2048+Math.floor(ctx.sampleRate/180)+2,x=buf.subarray(buf.length-need);   // trecho mais recente
+  let e=0;for(let i=0;i<x.length;i++)e+=x[i]*x[i];
+  const f=Math.sqrt(e/x.length)<0.005?-1:yin(x,ctx.sampleRate);
+  if(f<0){if(curr&&now-curr.last>0.12)closeNote();return}
+  const m=69+12*Math.log2(f/a4());
+  if(curr&&Math.abs(m-curr.midi)<0.65){curr.c.push((m-curr.midi)*100);curr.last=now}
+  else{closeNote();const n=Math.round(m);curr={midi:n,t0:now,last:now,c:[(m-n)*100]}}
+  const c=(m-Math.round(m))*100;
+  $('#cur').textContent=nm(Math.round(m));
+  $('#cents').textContent=(c>=0?'+':'')+c.toFixed(0)+' cêntimos · '+f.toFixed(1)+' Hz';
+}
+
+async function start(){
+  try{
+    ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();await ctx.resume();
+    stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+    an=ctx.createAnalyser();an.fftSize=4096;ctx.createMediaStreamSource(stream).connect(an);
+    buf=new Float32Array(an.fftSize);
+  }catch(e){
+    $('#fb').innerHTML='<p>Não foi possível acessar o microfone. Verifique a permissão e se a página usa HTTPS.</p>';return;
+  }
+  notes=[];curr=null;chips();rec=true;
+  $('#rec').textContent='■ Parar e ver o feedback';$('#rec').classList.add('rec');
+  $('#fb').innerHTML='<p class="hint">Preparando o microfone… aguarde um instante.</p>';
+  await new Promise(r=>setTimeout(r,500));        // o microfone leva um instante para começar a enviar som
+  if(!rec)return;
+  t0=performance.now();
+  $('#fb').innerHTML='<p><b>Pode tocar!</b> Depois toque em “Parar e ver o feedback”.</p>';
+  timer=setInterval(tick,25);
+}
+function stop(){
+  clearInterval(timer);closeNote();rec=false;
+  if(stream)stream.getTracks().forEach(t=>t.stop());
+  $('#rec').textContent='🎻 Começar a ouvir';$('#rec').classList.remove('rec');
+  $('#cur').textContent='–';$('#cents').innerHTML='&nbsp;';
+  feedback();
+}
+
+function feedback(){
+  const n=notes.length,out=[];
+  if(n<2){$('#fb').innerHTML='<p>Não detectei notas suficientes. Toque com som firme, perto do microfone e em ambiente silencioso, e tente de novo.</p>';return}
+  const ok=notes.filter(x=>Math.abs(x.med)<=10).length;
+  const mean=notes.reduce((s,x)=>s+x.med,0)/n,abs=notes.reduce((s,x)=>s+Math.abs(x.med),0)/n;
+  out.push(`<b>Resumo:</b> ${n} notas detectadas, ${ok} dentro de ±10 cêntimos (${Math.round(100*ok/n)}%). Desvio médio: ${abs.toFixed(0)} cêntimos.`);
+
+  if(mean>8)out.push(`<b>Tendência:</b> no geral você está <b>alto</b> (cerca de +${mean.toFixed(0)} cêntimos). Tente recuar os dedos um pouco, na direção da voluta.`);
+  else if(mean<-8)out.push(`<b>Tendência:</b> no geral você está <b>baixo</b> (cerca de ${mean.toFixed(0)} cêntimos). Tente avançar os dedos um pouco, na direção do cavalete.`);
+  else out.push('<b>Tendência:</b> sem desvio geral para cima ou para baixo. Bom sinal.');
+
+  const worst=[...notes].filter(x=>Math.abs(x.med)>15).sort((a,b)=>Math.abs(b.med)-Math.abs(a.med)).slice(0,3);
+  if(worst.length)out.push('<b>Notas para revisar:</b> '+worst.map(x=>`${nm(x.midi)} (${x.med>0?'alta':'baixa'} ${Math.abs(x.med).toFixed(0)} ¢)`).join(', ')+'.');
+
+  const shaky=notes.filter(x=>x.sd>15&&x.dur>0.4).length;
+  if(shaky)out.push(`<b>Estabilidade:</b> ${shaky} ${shaky>1?'notas oscilaram':'nota oscilou'} bastante. Pode ser vibrato largo, arco irregular ou dedo inseguro. Experimente notas longas e retas, sem vibrato.`);
+
+  const mode=$('#mode').value;
+  if(mode!=='free'){
+    const t=+$('#ton').value,exp=SC[mode].map(i=>(t+i)%12),played=new Set(notes.map(x=>pc(x.midi)));
+    const outside=[...new Set(notes.filter(x=>!exp.includes(pc(x.midi))).map(x=>NAMES[pc(x.midi)]))];
+    const missing=exp.filter(p=>!played.has(p)).map(p=>NAMES[p]);
+    out.push(`<b>Escala de ${NAMES[t]} ${mode==='maj'?'maior':'menor natural'}:</b> `+
+      (outside.length?`notas fora da escala: ${outside.join(', ')}. `:'todas as notas pertencem à escala. ')+
+      (missing.length?`Faltaram: ${missing.join(', ')}.`:'Todos os graus apareceram.'));
+  }
+
+  if(n>=4){
+    const io=notes.slice(1).map((x,i)=>x.t0-notes[i].t0),m=io.reduce((s,x)=>s+x,0)/io.length;
+    const cv=Math.sqrt(io.reduce((s,x)=>s+(x-m)**2,0)/io.length)/m;
+    out.push(cv<0.2?'<b>Ritmo:</b> intervalos entre as notas bem regulares.':`<b>Ritmo:</b> o tempo entre as notas variou cerca de ${Math.round(cv*100)}%. Tente um metrônomo.`);
+  }
+  $('#fb').innerHTML=out.map(p=>`<p>${p}</p>`).join('');
+}
+
+$('#rec').onclick=()=>rec?stop():start();
+$('#mode').onchange=()=>$('#tonW').classList.toggle('hide',$('#mode').value==='free');
+</script>
+</body>
+</html>
