@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script data-goatcounter="https://viniciusilva.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<title>Progresso de entonação</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f6f5f1;--fg:#1d1d1b;--muted:#6b6a64;--card:#fff;--line:#d9d6cc;--accent:#4c4cc9;--ok:#2f9e44;--mid:#e8590c;--bad:#e03131;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17171a;--fg:#ecebe6;--muted:#9a99a2;--card:#222227;--line:#3a3a42;--accent:#8c8cff;--ok:#51cf66;--mid:#ff922b;--bad:#ff6b6b;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#17171a;--fg:#ecebe6;--muted:#9a99a2;--card:#222227;--line:#3a3a42;--accent:#8c8cff;--ok:#51cf66;--mid:#ff922b;--bad:#ff6b6b;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:640px;margin:0 auto;padding:20px 16px 32px}
+a{color:var(--accent);font-weight:600;text-decoration:none}
+h1{font-size:1.35rem;margin:6px 0 4px}
+.sub{margin:0 0 16px;color:var(--muted);font-size:.92rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+h2{font-size:.95rem;margin:0 0 10px;color:var(--muted);font-weight:600}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+label{font-size:.85rem;color:var(--muted)}
+select,button{background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font:inherit;cursor:pointer}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:14px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+.tile b{display:block;font-size:1.7rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.tile span{font-size:.75rem;color:var(--muted)}
+.g{color:var(--ok)}.y{color:var(--mid)}.r{color:var(--bad)}
+svg{display:block;width:100%;height:auto}
+.gl{stroke:var(--line);stroke-width:1}.ax{fill:var(--muted);font-size:11px}
+.ln{fill:none;stroke:var(--fg);stroke-width:1.5;opacity:.35}
+.ma{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-dasharray:6 4}
+circle.g{fill:var(--ok)}circle.y{fill:var(--mid)}circle.r{fill:var(--bad)}
+rect.g{fill:var(--ok)}rect.y{fill:var(--mid)}rect.r{fill:var(--bad)}
+.leg{display:flex;flex-wrap:wrap;gap:12px;font-size:.78rem;color:var(--muted);margin-top:8px}
+.leg i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}
+.hist{display:grid;grid-template-columns:1fr auto auto;gap:2px 10px;padding:9px 0;border-top:1px solid var(--line)}
+.hist:first-of-type{border-top:0}
+.hist small{color:var(--muted)}
+.hist span,.hist small{grid-column:1}
+.hist b{font-size:1.2rem;grid-column:2;grid-row:1/span 2;align-self:center;font-variant-numeric:tabular-nums}
+.del{grid-column:3;grid-row:1/span 2;align-self:center;padding:6px 9px;line-height:1}
+.del:hover{border-color:var(--bad)}
+.empty{text-align:center;color:var(--muted);padding:24px 8px}
+.hint{color:var(--muted);font-size:.8rem}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+<main>
+<a href="https://viniciusfdasilva.github.io/">← Compasso</a>
+<h1>Progresso de entonação</h1>
+<p class="sub">A evolução das suas sessões no Tuningscore.</p>
+
+<div id="empty" class="card empty hide">
+  <p>Ainda não há sessões salvas.</p>
+  <p>Faça uma sessão no <a href="https://viniciusfdasilva.github.io/tuningscore/">Tuningscore</a>. Ela entra aqui automaticamente.</p>
+</div>
+
+<div id="content" class="hide">
+  <div class="row">
+    <label for="per">Período</label>
+    <select id="per"><option value="0">Tudo</option><option value="30">Últimos 30 dias</option><option value="7">Últimos 7 dias</option></select>
+  </div>
+  <div class="tiles" id="tiles"></div>
+
+  <div class="card">
+    <h2>Notas afinadas por sessão (%)</h2>
+    <div id="line"></div>
+    <div class="leg"><span><i style="background:var(--ok)"></i>75% ou mais</span><span><i style="background:var(--mid)"></i>50 a 74%</span><span><i style="background:var(--bad)"></i>abaixo de 50%</span><span>Linha tracejada: média das últimas 5 sessões</span></div>
+  </div>
+
+  <div class="card">
+    <h2>Verde, laranja e vermelho (últimas 24 sessões)</h2>
+    <div id="bars"></div>
+  </div>
+
+  <div class="card">
+    <h2>Histórico</h2>
+    <div id="hist"></div>
+    <div class="row" style="margin:12px 0 0"><button id="exp">Exportar (JSON)</button><button id="clr">Apagar histórico</button></div>
+  </div>
+</div>
+<p class="hint">O histórico fica salvo só neste navegador, neste aparelho. Nada é enviado para nenhum servidor, e limpar os dados do navegador apaga tudo.</p>
+</main>
+<script>
+const KEY='tuningscore:sessions';
+const $=s=>document.querySelector(s);
+const load=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return[]}};
+const NAMES=['Dó','Dó♯','Ré','Ré♯','Mi','Fá','Fá♯','Sol','Sol♯','Lá','Lá♯','Si'];
+const exName=s=>s.mode==='free'?'Livre':`Escala de ${NAMES[s.ton]} ${s.mode==='maj'?'maior':'menor'}`;
+const col=p=>p>=75?'g':p>=50?'y':'r';
+const fd=t=>new Date(t).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+const fdt=t=>new Date(t).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+const avg=a=>a.reduce((s,x)=>s+x,0)/(a.length||1);
+
+function line(d){
+  const W=600,H=220,L=34,R=10,T=10,B=26,w=W-L-R,h=H-T-B,m=d.length;
+  const X=i=>L+(m===1?w/2:i*w/(m-1)),Y=p=>T+(1-p/100)*h;
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolução da porcentagem de notas afinadas">`;
+  [0,25,50,75,100].forEach(p=>s+=`<line class="gl" x1="${L}" x2="${W-R}" y1="${Y(p)}" y2="${Y(p)}"/><text class="ax" x="${L-6}" y="${Y(p)+4}" text-anchor="end">${p}%</text>`);
+  if(m>1)s+=`<polyline class="ln" points="${d.map((x,i)=>X(i)+','+Y(x.g)).join(' ')}"/>`;
+  if(m>=3){
+    const ma=d.map((_,i)=>avg(d.slice(Math.max(0,i-4),i+1).map(x=>x.g)));
+    s+=`<polyline class="ma" points="${ma.map((v,i)=>X(i)+','+Y(v)).join(' ')}"/>`;
+  }
+  d.forEach((x,i)=>s+=`<circle class="${col(x.g)}" cx="${X(i)}" cy="${Y(x.g)}" r="${m>60?2:4.5}"><title>${fdt(x.t)}: ${x.g}% afinadas</title></circle>`);
+  [...new Set([0,Math.floor((m-1)/2),m-1])].forEach(i=>s+=`<text class="ax" x="${X(i)}" y="${H-6}" text-anchor="middle">${fd(d[i].t)}</text>`);
+  return s+'</svg>';
+}
+function bars(d){
+  d=d.slice(-24);
+  const W=600,H=150,L=8,T=4,B=22,m=d.length,gap=4,h=H-T-B,bw=Math.min(40,(W-L*2-gap*(m-1))/m);
+  const x0=i=>L+i*(bw+gap);
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Distribuição de verde, laranja e vermelho por sessão">`;
+  d.forEach((x,i)=>{
+    let y=T+h;
+    [['g',x.g],['y',x.y],['r',x.r]].forEach(([k,p])=>{const hh=h*p/100;y-=hh;if(hh>0)s+=`<rect class="${k}" x="${x0(i)}" y="${y}" width="${bw}" height="${hh}"><title>${fdt(x.t)}: ${x.g}% / ${x.y}% / ${x.r}%</title></rect>`});
+  });
+  s+=`<text class="ax" x="${x0(0)}" y="${H-6}">${fd(d[0].t)}</text>`;
+  if(m>1)s+=`<text class="ax" x="${x0(m-1)+bw}" y="${H-6}" text-anchor="end">${fd(d[m-1].t)}</text>`;
+  return s+'</svg>';
+}
+
+function render(){
+  const all=load();
+  $('#empty').classList.toggle('hide',all.length>0);
+  $('#content').classList.toggle('hide',!all.length);
+  if(!all.length)return;
+  const days=+$('#per').value,d=days?all.filter(s=>s.t>=Date.now()-days*864e5):all;
+  if(!d.length){
+    $('#tiles').innerHTML='';$('#line').innerHTML=$('#bars').innerHTML=$('#hist').innerHTML='<p class="empty">Nenhuma sessão nesse período.</p>';return;
+  }
+  const last=d[d.length-1],mean=Math.round(avg(d.map(x=>x.g))),best=Math.max(...d.map(x=>x.g));
+  let trend='–',tc='';
+  if(d.length>=6){
+    const a=avg(d.slice(-5).map(x=>x.g)),b=avg(d.slice(-10,-5).map(x=>x.g)),df=Math.round(a-b);
+    trend=(df>0?'+':df<0?'−':'')+Math.abs(df)+' pts';tc=df>0?'g':df<0?'r':'';
+  }
+  const tile=(v,l,c='')=>`<div class="tile"><b class="${c}">${v}</b><span>${l}</span></div>`;
+  $('#tiles').innerHTML=tile(d.length,'sessões')+tile(last.g+'%','última sessão',col(last.g))+tile(mean+'%','média',col(mean))+tile(best+'%','melhor',col(best))+tile(trend,'tendência (5 últimas vs 5 anteriores)',tc);
+  $('#line').innerHTML=line(d);
+  $('#bars').innerHTML=bars(d);
+  $('#hist').innerHTML=[...d].reverse().slice(0,15).map(x=>
+    `<div class="hist"><span>${fdt(x.t)}</span><b class="${col(x.g)}">${x.g}%</b><small>${exName(x)} · ${x.n} notas · desvio médio ${x.abs} ¢</small><button class="del" data-t="${x.t}" title="Apagar esta sessão" aria-label="Apagar esta sessão">🗑</button></div>`).join('');
+}
+$('#per').onchange=render;
+$('#hist').onclick=e=>{
+  const b=e.target.closest('.del');if(!b)return;
+  if(!confirm('Apagar esta sessão do histórico?'))return;
+  const t=+b.dataset.t;
+  try{localStorage.setItem(KEY,JSON.stringify(load().filter(x=>x.t!==t)))}catch(err){}
+  render();
+};
+$('#exp').onclick=()=>{
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(load(),null,2)],{type:'application/json'}));
+  a.download='tuningscore-historico.json';a.click();
+};
+$('#clr').onclick=()=>{if(confirm('Apagar todo o histórico de sessões? Isso não pode ser desfeito.')){localStorage.removeItem(KEY);render()}};
+render();
+</script>
+</body>
+</html>
