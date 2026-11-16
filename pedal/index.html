@@ -1,0 +1,473 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pads: notas pedal</title>
+
+<style>
+:root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+
+    --bg: #f6f5f1;
+    --fg: #1d1d1b;
+    --muted: #6b6a64;
+    --card: #fff;
+    --line: #d9d6cc;
+    --alt: #e7e4da;
+    --accent: #4c4cc9;
+
+    color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --bg: #17171a;
+        --fg: #ecebe6;
+        --muted: #9a99a2;
+        --card: #222227;
+        --line: #3a3a42;
+        --alt: #2d2d34;
+        --accent: #8c8cff;
+
+        color-scheme: dark;
+    }
+}
+
+:root[data-theme="dark"] {
+    --bg: #17171a;
+    --fg: #ecebe6;
+    --muted: #9a99a2;
+    --card: #222227;
+    --line: #3a3a42;
+    --alt: #2d2d34;
+    --accent: #8c8cff;
+
+    color-scheme: dark;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-padding-top: env(safe-area-inset-top, 0px);
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+main {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 20px 16px 32px;
+}
+
+h1 {
+    font-size: 1.35rem;
+    margin: 0 0 4px;
+}
+
+.sub {
+    margin: 0 0 16px;
+    color: var(--muted);
+    font-size: .92rem;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+}
+
+.pad {
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 2px solid var(--line);
+    background: var(--card);
+    color: var(--fg);
+    font: inherit;
+    font-size: 1.5rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.1;
+    transition: transform .1s, background .3s, color .3s, border-color .3s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.pad small {
+    font-size: .72rem;
+    font-weight: 500;
+    color: var(--muted);
+    margin-top: 4px;
+}
+
+.pad.alt {
+    background: var(--alt);
+}
+
+.pad:active {
+    transform: scale(.95);
+}
+
+.pad.on {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+.pad.on small {
+    color: #ffffffcc;
+}
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 14px;
+    margin-top: 18px;
+}
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+label {
+    font-size: .85rem;
+    color: var(--muted);
+}
+
+input[type=range] {
+    flex: 1;
+    min-width: 120px;
+    accent-color: var(--accent);
+}
+
+button.stop {
+    background: var(--card);
+    color: var(--fg);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font: inherit;
+    cursor: pointer;
+}
+
+#now {
+    font-size: .85rem;
+    color: var(--muted);
+    min-height: 1.4em;
+    margin-bottom: 10px;
+}
+
+.hint {
+    color: var(--muted);
+    font-size: .8rem;
+    margin: 10px 0 0;
+}
+
+/* Créditos */
+
+.credits {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: .82rem;
+    text-align: center;
+}
+
+.credits p {
+    margin: 4px 0;
+}
+
+.credits a {
+    color: var(--accent);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.credits a:hover {
+    text-decoration: underline;
+}
+</style>
+</head>
+
+<body>
+
+<main>
+
+<h1>Pads: notas pedal</h1>
+
+<p class="sub">
+    Toque numa nota para tocar o pad dela.
+    Toque de novo para pausar.
+</p>
+
+<div class="grid" id="grid"></div>
+
+<div class="card">
+
+    <div id="now">Pronto. Escolha uma nota.</div>
+
+    <div class="row">
+
+        <label for="vol">Volume</label>
+
+        <input
+            type="range"
+            id="vol"
+            min="0"
+            max="100"
+            value="80"
+        >
+
+        <button class="stop" id="stop">
+            Pausar
+        </button>
+
+    </div>
+
+    <p class="hint">
+        Os áudios são reproduzidos diretamente dos arquivos MP3
+        hospedados no projeto Pedal.
+    </p>
+
+</div>
+
+<!-- Créditos -->
+
+<div class="credits">
+
+    <p><strong>Créditos dos áudios</strong></p>
+
+    <p>
+        Todos os áudios utilizados neste projeto foram gerados por
+        <a
+            href="https://www.youtube.com/channel/UCZpFsS09vWI5EQUJd974fTw"
+            target="_blank"
+            rel="noopener noreferrer"
+        >
+            Augusto Gruetzmacher
+        </a>.
+    </p>
+
+</div>
+
+</main>
+
+<script>
+
+// URL base dos arquivos MP3
+
+const AUDIO_BASE = 'https://viniciusfdasilva.github.io/pedal/';
+
+// Notas e respectivos arquivos
+
+const NOTES = [
+    { name: 'Dó',  alt: '',       file: 'c.mp3' },
+    { name: 'Ré♭', alt: 'Dó♯',    file: 'db.mp3' },
+    { name: 'Ré',  alt: '',       file: 'd.mp3' },
+    { name: 'Mi♭', alt: 'Ré♯',    file: 'eb.mp3' },
+    { name: 'Mi',  alt: '',       file: 'e.mp3' },
+    { name: 'Fá',  alt: '',       file: 'f.mp3' },
+    { name: 'Sol♭',alt: 'Fá♯',    file: 'gb.mp3' },
+    { name: 'Sol', alt: '',       file: 'g.mp3' },
+    { name: 'Lá♭', alt: 'Sol♯',   file: 'ab.mp3' },
+    { name: 'Lá',  alt: '',       file: 'a.mp3' },
+    { name: 'Si♭', alt: 'Lá♯',    file: 'bb.mp3' },
+    { name: 'Si',  alt: '',       file: 'b.mp3' }
+];
+
+const $ = s => document.querySelector(s);
+
+// Estado do player
+
+let audio = new Audio();
+
+audio.loop = true;
+audio.preload = 'none';
+
+let cur = -1;
+let playing = false;
+
+// Criar os pads
+
+NOTES.forEach((note, i) => {
+
+    const b = document.createElement('button');
+
+    b.className = 'pad' + (note.alt ? ' alt' : '');
+
+    b.innerHTML = `${note.name}<small>${note.alt || '&nbsp;'}</small>`;
+
+    b.onclick = () => toggle(i);
+
+    $('#grid').appendChild(b);
+
+});
+
+// Atualizar aparência dos pads
+
+function paint() {
+
+    document.querySelectorAll('.pad').forEach((b, i) => {
+
+        b.classList.toggle('on', playing && i === cur);
+
+    });
+
+}
+
+// Reproduzir ou pausar uma nota
+
+function toggle(i) {
+
+    // Se clicar na mesma nota, pausa
+
+    if (playing && cur === i) {
+
+        pause();
+
+        return;
+    }
+
+    // Interromper áudio anterior
+
+    audio.pause();
+
+    audio.currentTime = 0;
+
+    // Atualizar nota selecionada
+
+    cur = i;
+
+    playing = false;
+
+    paint();
+
+    // Carregar o arquivo correspondente
+
+    const file = NOTES[i].file;
+
+    audio.src = AUDIO_BASE + file;
+
+    audio.loop = true;
+
+    $('#now').textContent = 'Carregando: ' + NOTES[i].name + '...';
+
+    // Aplicar volume
+
+    audio.volume = Number($('#vol').value) / 100;
+
+    // Reproduzir
+
+    audio.play().then(() => {
+
+        playing = true;
+
+        $('#now').textContent = 'Tocando: ' + NOTES[i].name;
+
+        paint();
+
+    }).catch(error => {
+
+        playing = false;
+
+        paint();
+
+        $('#now').textContent =
+            'Erro ao reproduzir ' + file + '. Verifique a conexão e o arquivo.';
+
+        console.error('Erro de reprodução:', error);
+
+    });
+
+}
+
+// Pausar reprodução
+
+function pause() {
+
+    audio.pause();
+
+    playing = false;
+
+    $('#now').textContent = 'Reprodução pausada.';
+
+    paint();
+
+}
+
+// Evento de reprodução
+
+audio.addEventListener('play', () => {
+
+    playing = true;
+
+    paint();
+
+});
+
+// Evento de pausa
+
+audio.addEventListener('pause', () => {
+
+    playing = false;
+
+    paint();
+
+});
+
+// Tratamento de erros de carregamento
+
+audio.addEventListener('error', () => {
+
+    if (cur >= 0) {
+
+        $('#now').textContent =
+            'Não foi possível carregar o áudio: ' + NOTES[cur].file;
+
+        playing = false;
+
+        paint();
+
+    }
+
+});
+
+// Controle de volume
+
+$('#vol').oninput = e => {
+
+    audio.volume = Number(e.target.value) / 100;
+
+};
+
+// Botão de pausa
+
+$('#stop').onclick = () => {
+
+    pause();
+
+};
+
+</script>
+
+</body>
+</html>
