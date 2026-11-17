@@ -29,6 +29,10 @@ button.main.rec{background:var(--bad);border-color:var(--bad);color:#fff}
 .chips{display:flex;flex-wrap:wrap;gap:6px;min-height:34px}
 .chip{border-radius:999px;padding:4px 10px;font-size:.85rem;font-variant-numeric:tabular-nums;border:2px solid var(--line)}
 .chip.g{border-color:var(--ok)}.chip.y{border-color:var(--mid)}.chip.r{border-color:var(--bad)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:10px;font-size:.82rem;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.legend .lg{background:var(--ok)}.legend .ly{background:var(--mid)}.legend .lr{background:var(--bad)}
 h2{font-size:.95rem;margin:0 0 8px;color:var(--muted);font-weight:600}
 #fb p{margin:0 0 10px}
 #fb p:last-child{margin:0}
@@ -72,6 +76,11 @@ h2{font-size:.95rem;margin:0 0 8px;color:var(--muted);font-weight:600}
   <h2>Notas detectadas</h2>
   <div class="chips" id="chips"></div>
   <p class="hint" style="margin-top:8px">Cada nota aparece uma vez, com a variação em cêntimos durante ela (100 cêntimos = 1 semitom). A cor segue o valor típico: verde até ±10, laranja até ±25, vermelho acima disso.</p>
+  <div class="legend" aria-label="Legenda das cores">
+    <span><i class="lg"></i> Verde: afinada (até ±10 ¢)</span>
+    <span><i class="ly"></i> Laranja: quase afinada (acima de ±10 até ±25 ¢)</span>
+    <span><i class="lr"></i> Vermelho: desafinada (acima de ±25 ¢)</span>
+  </div>
 </div>
 
 <div class="card" id="fbCard">
@@ -132,7 +141,9 @@ function chips(){
   $('#chips').innerHTML=notes.map(n=>{
     const k=Math.abs(n.med)<=10?'g':Math.abs(n.med)<=25?'y':'r';
     const r=Math.round(n.lo)===Math.round(n.hi)?sg(n.lo):sg(n.lo)+' a '+sg(n.hi);
-    return `<span class="chip ${k}">${nm(n.midi)} ${r}</span>`;
+    const indicator=Math.abs(n.med)<=10?'☑️':(n.med>0?'⬆️':'⬇️');
+    const status=Math.abs(n.med)<=10?'afinada':(n.med>0?'alta':'baixa');
+    return `<span class="chip ${k}" title="${status}">${indicator} ${nm(n.midi)} ${r}</span>`;
   }).join('');
 }
 function tick(){
@@ -235,7 +246,7 @@ function feedback(){
     localStorage.setItem(KEY,JSON.stringify(arr.slice(-500)));
     msg=`✓ Sessão salva no seu histórico (${arr.length} no total).`;
   }catch(e){msg='Não consegui salvar: o navegador bloqueou o armazenamento do site (aba privada ou bloqueio de dados).'}
-  h+=`<p class="hint" style="margin-top:12px">${msg} <a href="https://viniciusfdasilva.github.io/progresso/" style="color:var(--accent);font-weight:600">Ver meu progresso →</a></p>`;
+  h+=`<p class="hint" style="margin-top:12px">${msg} <a href="https://viniciusfdasilva.github.io/progress/" style="color:var(--accent);font-weight:600">Ver meu progresso →</a></p>`;
   $('#fb').innerHTML=h;
 }
 
