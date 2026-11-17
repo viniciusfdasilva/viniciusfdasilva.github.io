@@ -2,7 +2,6 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<script data-goatcounter="https://viniciusilva.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Assistente de violino</title>
 <style>
@@ -242,7 +241,7 @@ function feedback(){
   if(n<3)msg='Sessão curta demais para o histórico (mínimo de 3 notas).';
   else try{
     const KEY='tuningscore:sessions',arr=JSON.parse(localStorage.getItem(KEY)||'[]');
-    arr.push({t:Date.now(),n,g:pg,y:py,r:pr,abs:Math.round(abs),mean:Math.round(mean),mode,ton:tUsed,oct:mode==='free'?0:+$('#oct').value});
+    arr.push({t:Date.now(),n,g:pg,y:py,r:pr,abs:Math.round(abs),mean:Math.round(mean),mode,ton:tUsed,oct:mode==='free'?0:+$('#oct').value,notes:notes.map(x=>[x.midi,Math.round(x.lo),Math.round(x.med),Math.round(x.hi),Math.round(x.dur*10)])});   // nota, variação (mín, típico, máx) e duração em décimos de segundo
     localStorage.setItem(KEY,JSON.stringify(arr.slice(-500)));
     msg=`✓ Sessão salva no seu histórico (${arr.length} no total).`;
   }catch(e){msg='Não consegui salvar: o navegador bloqueou o armazenamento do site (aba privada ou bloqueio de dados).'}
