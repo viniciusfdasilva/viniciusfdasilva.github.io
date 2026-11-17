@@ -42,6 +42,15 @@ rect.g{fill:var(--ok)}rect.y{fill:var(--mid)}rect.r{fill:var(--bad)}
 .hist b{font-size:1.2rem;grid-column:2;grid-row:1/span 2;align-self:center;font-variant-numeric:tabular-nums}
 .del{grid-column:3;grid-row:1/span 2;align-self:center;padding:6px 9px;line-height:1}
 .del:hover{border-color:var(--bad)}
+.hist{cursor:pointer}
+.hist span::before{content:'▸ ';color:var(--muted)}
+.hist.open span::before{content:'▾ '}
+.hist .nts{display:none;grid-column:1/-1;grid-row:3;margin-top:8px;cursor:default}
+.hist.open .nts{display:block}
+.nc-list{display:flex;flex-wrap:wrap;gap:6px}
+.nc{border-radius:999px;padding:3px 9px;font-size:.82rem;font-variant-numeric:tabular-nums;border:2px solid var(--line)}
+.nc.ok{border-color:var(--ok)}.nc.mid{border-color:var(--mid)}.nc.bad{border-color:var(--bad)}
+.nts p{margin:8px 0 0}
 .empty{text-align:center;color:var(--muted);padding:24px 8px}
 .hint{color:var(--muted);font-size:.8rem}
 .hide{display:none!important}
@@ -98,6 +107,17 @@ const exName=s=>s.mode==='free'?'Livre':`Escala de ${NAMES[s.ton]} ${s.mode==='m
 const col=p=>p>=75?'g':p>=50?'y':'r';
 const fd=t=>new Date(t).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
 const fdt=t=>new Date(t).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+const nmN=m=>NAMES[((m%12)+12)%12]+(Math.floor(m/12)-1);
+const dirOf=m=>Math.abs(m)<=10?['☑️','afinada']:m>0?['⬆️','alta']:['⬇️','baixa'];
+const sg=v=>(Math.round(v)>=0?'+':'−')+Math.abs(Math.round(v));
+function notesHtml(ns){
+  if(!ns||!ns.length)return '<p class="hint">Esta sessão foi salva antes do registro das notas, então não há detalhes.</p>';
+  return '<div class="nc-list">'+ns.map(([m,lo,med,hi])=>{
+    const k=Math.abs(med)<=10?'ok':Math.abs(med)<=25?'mid':'bad',[ic,tx]=dirOf(med);
+    const r=Math.round(lo)===Math.round(hi)?sg(lo):sg(lo)+' a '+sg(hi);
+    return `<span class="nc ${k}" title="${nmN(m)}: ${tx}">${nmN(m)} ${r} ${ic}</span>`;
+  }).join('')+'</div><p class="hint">☑️ afinada (até ±10 ¢) · ⬆️ alta · ⬇️ baixa. O número é a variação em cêntimos durante a nota.</p>';
+}
 const avg=a=>a.reduce((s,x)=>s+x,0)/(a.length||1);
 
 function line(d,met){
@@ -160,11 +180,14 @@ function render(){
   $('#line').innerHTML=line(d,met);
   $('#bars').innerHTML=bars(d);
   $('#hist').innerHTML=[...d].reverse().slice(0,15).map(x=>
-    `<div class="hist"><span>${fdt(x.t)}</span><b class="${col(x.g)}">${x.g}%</b><small>${exName(x)} · ${x.n} notas · desvio médio ${x.abs} ¢</small><button class="del" data-t="${x.t}" title="Apagar esta sessão" aria-label="Apagar esta sessão">🗑</button></div>`).join('');
+    `<div class="hist" tabindex="0" role="button" aria-expanded="false" title="Ver as notas desta sessão"><span>${fdt(x.t)}</span><b class="${col(x.g)}">${x.g}%</b><small>${exName(x)} · ${x.n} notas · desvio médio ${x.abs} ¢</small><button class="del" data-t="${x.t}" title="Apagar esta sessão" aria-label="Apagar esta sessão">🗑</button><div class="nts">${notesHtml(x.notes)}</div></div>`).join('');
 }
 $('#per').onchange=render;$('#ex').onchange=render;$('#met').onchange=render;
+const toggleRow=r=>r.setAttribute('aria-expanded',r.classList.toggle('open'));
+$('#hist').onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('hist')){e.preventDefault();toggleRow(e.target)}};
 $('#hist').onclick=e=>{
-  const b=e.target.closest('.del');if(!b)return;
+  const b=e.target.closest('.del');
+  if(!b){if(e.target.closest('.nts'))return;const r=e.target.closest('.hist');if(r)toggleRow(r);return}
   if(!confirm('Apagar esta sessão do histórico?'))return;
   const t=+b.dataset.t;
   try{localStorage.setItem(KEY,JSON.stringify(load().filter(x=>x.t!==t)))}catch(err){}
