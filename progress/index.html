@@ -56,19 +56,23 @@ rect.g{fill:var(--ok)}rect.y{fill:var(--mid)}rect.r{fill:var(--bad)}
 <div id="empty" class="card empty hide">
   <p>Ainda não há sessões salvas.</p>
   <p>Faça uma sessão no <a href="https://viniciusfdasilva.github.io/tuningscore/">Tuningscore</a>. Ela entra aqui automaticamente.</p>
+  <p class="hint" id="orig"></p>
 </div>
 
 <div id="content" class="hide">
   <div class="row">
+    <label for="ex">Exercício</label><select id="ex"></select>
+    <label for="met">Medida</label><select id="met"><option value="g">Notas afinadas (%)</option><option value="abs">Desvio médio (¢)</option></select>
     <label for="per">Período</label>
     <select id="per"><option value="0">Tudo</option><option value="30">Últimos 30 dias</option><option value="7">Últimos 7 dias</option></select>
   </div>
+  <p class="hint hide" id="warn">Atenção: exercícios diferentes (tom, oitavas) têm dificuldades diferentes. Para uma comparação justa, escolha um exercício específico.</p>
   <div class="tiles" id="tiles"></div>
 
   <div class="card">
-    <h2>Notas afinadas por sessão (%)</h2>
+    <h2 id="lineT"></h2>
     <div id="line"></div>
-    <div class="leg"><span><i style="background:var(--ok)"></i>75% ou mais</span><span><i style="background:var(--mid)"></i>50 a 74%</span><span><i style="background:var(--bad)"></i>abaixo de 50%</span><span>Linha tracejada: média das últimas 5 sessões</span></div>
+    <div class="leg" id="legend"></div>
   </div>
 
   <div class="card">
@@ -89,23 +93,27 @@ const KEY='tuningscore:sessions';
 const $=s=>document.querySelector(s);
 const load=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return[]}};
 const NAMES=['Dó','Dó♯','Ré','Ré♯','Mi','Fá','Fá♯','Sol','Sol♯','Lá','Lá♯','Si'];
-const exName=s=>s.mode==='free'?'Livre':`Escala de ${NAMES[s.ton]} ${s.mode==='maj'?'maior':'menor'}`;
+const exKey=s=>s.mode==='free'?'free':`${s.mode}-${s.ton}-${s.oct||0}`;
+const exName=s=>s.mode==='free'?'Livre':`Escala de ${NAMES[s.ton]} ${s.mode==='maj'?'maior':'menor'}`+(s.oct?` · ${s.oct} ${s.oct>1?'oitavas':'oitava'}`:'');
 const col=p=>p>=75?'g':p>=50?'y':'r';
 const fd=t=>new Date(t).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
 const fdt=t=>new Date(t).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
 const avg=a=>a.reduce((s,x)=>s+x,0)/(a.length||1);
 
-function line(d){
-  const W=600,H=220,L=34,R=10,T=10,B=26,w=W-L-R,h=H-T-B,m=d.length;
-  const X=i=>L+(m===1?w/2:i*w/(m-1)),Y=p=>T+(1-p/100)*h;
-  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolução da porcentagem de notas afinadas">`;
-  [0,25,50,75,100].forEach(p=>s+=`<line class="gl" x1="${L}" x2="${W-R}" y1="${Y(p)}" y2="${Y(p)}"/><text class="ax" x="${L-6}" y="${Y(p)+4}" text-anchor="end">${p}%</text>`);
-  if(m>1)s+=`<polyline class="ln" points="${d.map((x,i)=>X(i)+','+Y(x.g)).join(' ')}"/>`;
+function line(d,met){
+  const W=600,H=220,L=40,R=10,T=10,B=26,w=W-L-R,h=H-T-B,m=d.length,pct=met==='g';
+  const val=x=>pct?x.g:x.abs;
+  const mx=pct?100:Math.max(20,Math.ceil(Math.max(...d.map(val))/5)*5);
+  const X=i=>L+(m===1?w/2:i*w/(m-1)),Y=v=>T+(1-v/mx)*h;
+  const cl=x=>pct?col(x.g):(x.abs<=8?'g':x.abs<=15?'y':'r');
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolução por sessão">`;
+  [0,.25,.5,.75,1].forEach(f=>{const v=f*mx;s+=`<line class="gl" x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}"/><text class="ax" x="${L-6}" y="${Y(v)+4}" text-anchor="end">${Math.round(v)}${pct?'%':'¢'}</text>`});
+  if(m>1)s+=`<polyline class="ln" points="${d.map((x,i)=>X(i)+','+Y(val(x))).join(' ')}"/>`;
   if(m>=3){
-    const ma=d.map((_,i)=>avg(d.slice(Math.max(0,i-4),i+1).map(x=>x.g)));
+    const ma=d.map((_,i)=>avg(d.slice(Math.max(0,i-4),i+1).map(val)));
     s+=`<polyline class="ma" points="${ma.map((v,i)=>X(i)+','+Y(v)).join(' ')}"/>`;
   }
-  d.forEach((x,i)=>s+=`<circle class="${col(x.g)}" cx="${X(i)}" cy="${Y(x.g)}" r="${m>60?2:4.5}"><title>${fdt(x.t)}: ${x.g}% afinadas</title></circle>`);
+  d.forEach((x,i)=>s+=`<circle class="${cl(x)}" cx="${X(i)}" cy="${Y(val(x))}" r="${m>60?2:4.5}"><title>${fdt(x.t)}: ${pct?x.g+'% afinadas':x.abs+' ¢ de desvio médio'}</title></circle>`);
   [...new Set([0,Math.floor((m-1)/2),m-1])].forEach(i=>s+=`<text class="ax" x="${X(i)}" y="${H-6}" text-anchor="middle">${fd(d[i].t)}</text>`);
   return s+'</svg>';
 }
@@ -123,29 +131,38 @@ function bars(d){
   return s+'</svg>';
 }
 
+let first=true;
 function render(){
   const all=load();
   $('#empty').classList.toggle('hide',all.length>0);
   $('#content').classList.toggle('hide',!all.length);
   if(!all.length)return;
-  const days=+$('#per').value,d=days?all.filter(s=>s.t>=Date.now()-days*864e5):all;
+  const cnt={};all.forEach(x=>{const k=exKey(x);(cnt[k]=cnt[k]||{n:0,l:exName(x)}).n++});
+  const sel=$('#ex'),last0=exKey(all[all.length-1]),want=first?last0:sel.value;first=false;
+  sel.innerHTML='<option value="all">Todos (não comparável)</option>'+Object.entries(cnt).map(([k,v])=>`<option value="${k}">${v.l} (${v.n})</option>`).join('');
+  sel.value=(cnt[want]||want==='all')?want:last0;
+  const days=+$('#per').value,ex=sel.value,met=$('#met').value,pct=met==='g';
+  const d=all.filter(x=>(ex==='all'||exKey(x)===ex)&&(!days||x.t>=Date.now()-days*864e5));
+  $('#warn').classList.toggle('hide',!(ex==='all'&&Object.keys(cnt).length>1));
   if(!d.length){
-    $('#tiles').innerHTML='';$('#line').innerHTML=$('#bars').innerHTML=$('#hist').innerHTML='<p class="empty">Nenhuma sessão nesse período.</p>';return;
+    $('#tiles').innerHTML='';$('#line').innerHTML=$('#bars').innerHTML=$('#hist').innerHTML='<p class="empty">Nenhuma sessão nesse filtro.</p>';return;
   }
-  const last=d[d.length-1],mean=Math.round(avg(d.map(x=>x.g))),best=Math.max(...d.map(x=>x.g));
+  const last=d[d.length-1],mean=Math.round(avg(d.map(x=>x.g))),best=Math.max(...d.map(x=>x.g)),ad=Math.round(avg(d.map(x=>x.abs)));
   let trend='–',tc='';
   if(d.length>=6){
     const a=avg(d.slice(-5).map(x=>x.g)),b=avg(d.slice(-10,-5).map(x=>x.g)),df=Math.round(a-b);
     trend=(df>0?'+':df<0?'−':'')+Math.abs(df)+' pts';tc=df>0?'g':df<0?'r':'';
   }
   const tile=(v,l,c='')=>`<div class="tile"><b class="${c}">${v}</b><span>${l}</span></div>`;
-  $('#tiles').innerHTML=tile(d.length,'sessões')+tile(last.g+'%','última sessão',col(last.g))+tile(mean+'%','média',col(mean))+tile(best+'%','melhor',col(best))+tile(trend,'tendência (5 últimas vs 5 anteriores)',tc);
-  $('#line').innerHTML=line(d);
+  $('#tiles').innerHTML=tile(d.length,'sessões')+tile(last.g+'%','última sessão',col(last.g))+tile(mean+'%','média afinadas',col(mean))+tile(best+'%','melhor',col(best))+tile(ad+' ¢','desvio médio',ad<=8?'g':ad<=15?'y':'r')+tile(trend,'tendência (5 últimas vs 5 anteriores)',tc);
+  $('#lineT').textContent=pct?'Notas afinadas por sessão (%)':'Desvio médio por sessão (cêntimos, menor é melhor)';
+  $('#legend').innerHTML=(pct?'<span><i style="background:var(--ok)"></i>75% ou mais</span><span><i style="background:var(--mid)"></i>50 a 74%</span><span><i style="background:var(--bad)"></i>abaixo de 50%</span>':'<span><i style="background:var(--ok)"></i>até 8 ¢</span><span><i style="background:var(--mid)"></i>até 15 ¢</span><span><i style="background:var(--bad)"></i>acima de 15 ¢</span>')+'<span>Tracejado: média das últimas 5 sessões</span>';
+  $('#line').innerHTML=line(d,met);
   $('#bars').innerHTML=bars(d);
   $('#hist').innerHTML=[...d].reverse().slice(0,15).map(x=>
     `<div class="hist"><span>${fdt(x.t)}</span><b class="${col(x.g)}">${x.g}%</b><small>${exName(x)} · ${x.n} notas · desvio médio ${x.abs} ¢</small><button class="del" data-t="${x.t}" title="Apagar esta sessão" aria-label="Apagar esta sessão">🗑</button></div>`).join('');
 }
-$('#per').onchange=render;
+$('#per').onchange=render;$('#ex').onchange=render;$('#met').onchange=render;
 $('#hist').onclick=e=>{
   const b=e.target.closest('.del');if(!b)return;
   if(!confirm('Apagar esta sessão do histórico?'))return;
@@ -159,6 +176,7 @@ $('#exp').onclick=()=>{
   a.download='tuningscore-historico.json';a.click();
 };
 $('#clr').onclick=()=>{if(confirm('Apagar todo o histórico de sessões? Isso não pode ser desfeito.')){localStorage.removeItem(KEY);render()}};
+$('#orig').textContent='Endereço desta página: '+location.origin+'. O Tuningscore precisa estar aberto neste mesmo endereço.';
 render();
 </script>
 </body>
