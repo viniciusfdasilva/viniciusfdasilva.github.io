@@ -59,14 +59,14 @@ h2{font-size:.95rem;margin:0 0 8px;color:var(--muted);font-weight:600}
 <main>
 <h1>Assistente de violino</h1>
 <p class="sub">Toque, e o assistente escuta e diz como foi a sua entonação.</p>
-<p class="sub">⚠️ Certifique-se de estar em um local com menos interferência sonora possível!</p>
-<p class="sub">⚠️ Fique num lugar silencioso, sem ruído de fundo. 🤫</p>
+<p class="sub">⚠️ Fique num lugar silencioso, sem ruído de fundo! 🤫</p>
+<p class="sub">⚠️ Certifique-se que a frequência selecionada é a desejada!</p>
 <div class="card">
   <div class="row">
     <label for="mode">Exercício</label>
     <select id="mode"><option value="free">Livre</option><option value="maj">Escala maior</option><option value="min">Escala menor natural</option></select>
     <span id="tonW" class="hide"><label for="ton">Tônica</label> <select id="ton"></select> <label for="oct">Oitavas</label> <select id="oct"><option>1</option><option>2</option></select></span>
-    <label for="a4">Lá =</label><input type="number" id="a4" min="400" max="480" value="440">
+    <label for="a4">Lá =</label><input type="number" id="a4" min="400" max="480" value="442">
   </div>
   <button class="main" id="rec">🎻 Começar a ouvir</button>
   <div class="live"><div id="cur">–</div><div id="cents">&nbsp;</div></div>
