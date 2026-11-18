@@ -55,6 +55,7 @@ h2{font-size:.95rem;margin:0 0 8px;color:var(--muted);font-weight:600}
 .tile.r{border-color:var(--bad)}.tile.r b{color:var(--bad)}
 .item{border-left:4px solid var(--line);padding:4px 0 4px 12px;margin:12px 0 0}
 .item.g{border-color:var(--ok)}.item.y{border-color:var(--mid)}.item.r{border-color:var(--bad)}
+.eye{width:40px;height:40px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
 .hide{display:none!important}
 </style>
 </head>
@@ -65,6 +66,8 @@ h2{font-size:.95rem;margin:0 0 8px;color:var(--muted);font-weight:600}
 <p class="sub">⚠️ Fique num lugar silencioso, sem ruído de fundo! 🤫</p>
 <p class="sub">⚠️ Certifique-se de que a frequência selecionada é a desejada!</p>
 <div class="card">
+  <div class="row" style="justify-content:space-between;margin-bottom:6px"><h2 style="margin:0">Configurações</h2><button type="button" id="hid" class="eye" aria-label="Esconder configurações"></button></div>
+  <div id="cfg">
   <div class="grp"><label>Afinação</label><div class="seg" id="g-tmp" data-k="tmp"></div></div>
   <div class="grp"><label>Exercício</label><div class="seg" id="g-mode" data-k="mode"></div></div>
   <div id="scW" class="hide">
@@ -74,6 +77,7 @@ h2{font-size:.95rem;margin:0 0 8px;color:var(--muted);font-weight:600}
     <div class="grp"><label>Oitavas</label><div class="seg" id="g-oct" data-k="oct"></div></div>
   </div>
   <div class="row"><label for="a4">Lá =</label><input type="number" id="a4" min="400" max="480" value="442"></div>
+  </div>
   <button class="main" id="rec">🎻 Começar a ouvir</button>
   <div class="live"><div id="cur">–</div><div id="cents">&nbsp;</div></div>
 </div>
@@ -101,7 +105,7 @@ h2{font-size:.95rem;margin:0 0 8px;color:var(--muted);font-weight:600}
 const $=s=>document.querySelector(s);
 const NAMES=['Dó','Dó♯','Ré','Ré♯','Mi','Fá','Fá♯','Sol','Sol♯','Lá','Lá♯','Si'];
 const LN=['Dó','Ré','Mi','Fá','Sol','Lá','Si'],LP=[0,2,4,5,7,9,11],LF=[0,2,4,-1,1,3,5];   // letra: nome, classe de altura, posição na cadeia de quintas
-const AC=a=>a===0?'':a>0?'♯'.repeat(a):'♭'.repeat(-a);
+const AC=a=>a===0?'':a===2?'𝄪':a>0?'♯'.repeat(a):'♭'.repeat(-a);
 const AUTO={maj:[[0,0],[1,-1],[1,0],[2,-1],[2,0],[3,0],[3,1],[4,0],[5,-1],[5,0],[6,-1],[6,0]],min:[[0,0],[0,1],[1,0],[2,-1],[2,0],[3,0],[3,1],[4,0],[4,1],[5,0],[6,-1],[6,0]]};
 const nm=m=>NAMES[((m%12)+12)%12]+(Math.floor(m/12)-1);
 const pc=m=>((m%12)+12)%12;
@@ -113,7 +117,7 @@ const OPT={
   mode:[['free','Livre'],['scale','Escala']],
   q:[['maj','Maior'],['min','Menor']],
   li:[[-1,'Auto'],...LN.map((n,i)=>[i,n])],
-  ac:[[-2,'♭♭'],[-1,'♭'],[0,'♮'],[1,'♯'],[2,'♯♯']],
+  ac:[[-2,'♭♭'],[-1,'♭'],[0,'♮'],[1,'♯'],[2,'𝄪']],
   oct:[[1,'1'],[2,'2']]
 };
 Object.keys(OPT).forEach(k=>{$('#g-'+k).innerHTML=OPT[k].map(([v,l])=>`<button type="button" data-v="${v}">${l}</button>`).join('')});
@@ -308,6 +312,10 @@ function feedback(){
 }
 
 $('#rec').onclick=()=>rec?stop():start();
+const EYE='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const OFF='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.9 10.9 0 0 1 12 19c-7 0-11-7-11-7a19.8 19.8 0 0 1 5.06-5.94M9.9 4.24A10.9 10.9 0 0 1 12 5c7 0 11 7 11 7a19.8 19.8 0 0 1-3.17 4.19M14.12 14.12a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>';
+$('#hid').innerHTML=EYE;
+$('#hid').onclick=()=>{const h=$('#cfg').classList.toggle('hide');$('#hid').innerHTML=h?OFF:EYE;$('#hid').setAttribute('aria-label',h?'Mostrar configurações':'Esconder configurações')};
 </script>
 </body>
 </html>
