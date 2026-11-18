@@ -14,12 +14,16 @@ html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 main{max-width:520px;margin:0 auto;padding:20px 16px 32px}
 h1{font-size:1.35rem;margin:0 0 4px}
-p.sub{margin:0 0 16px;color:var(--muted);font-size:.92rem}
+p.sub{margin:0 0 8px;color:var(--muted);font-size:.92rem}
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+.grp{margin-bottom:10px}
+.grp>label{display:block;margin-bottom:4px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{min-width:46px;height:46px;padding:0 8px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);font:inherit;font-size:.9rem;cursor:pointer}
+.seg button.on{background:var(--fg);color:var(--bg);border-color:var(--fg);font-weight:600}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
 label{font-size:.85rem;color:var(--muted)}
-select,input[type=number]{background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit}
-input[type=number]{width:80px}
+input[type=number]{background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;width:80px}
 button.main{background:var(--fg);color:var(--bg);border:1px solid var(--fg);border-radius:10px;padding:12px;font:inherit;font-weight:600;font-size:1.05rem;cursor:pointer;width:100%}
 button.main.rec{background:var(--bad);border-color:var(--bad);color:#fff}
 .live{text-align:center;margin:12px 0 4px}
@@ -36,7 +40,6 @@ h2{font-size:.95rem;margin:0 0 8px;color:var(--muted);font-weight:600}
 #fb p{margin:0 0 10px}
 #fb p:last-child{margin:0}
 .hint{color:var(--muted);font-size:.8rem;margin:0}
-#fb p{margin:0 0 10px}
 .score{display:flex;align-items:center;gap:14px;margin-bottom:12px}
 .big{font-size:3.4rem;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
 .big.g{color:var(--ok)}.big.y{color:var(--mid)}.big.r{color:var(--bad)}
@@ -58,16 +61,19 @@ h2{font-size:.95rem;margin:0 0 8px;color:var(--muted);font-weight:600}
 <body>
 <main>
 <h1>Assistente de violino</h1>
-<p class="sub">Toque, e o assistente escuta e diz como foi a sua entonação.</p><br/>
+<p class="sub">Toque, e o assistente escuta e diz como foi a sua entonação.</p>
 <p class="sub">⚠️ Fique num lugar silencioso, sem ruído de fundo! 🤫</p>
-<p class="sub">⚠️ Certifique-se que a frequência selecionada é a desejada!</p>
+<p class="sub">⚠️ Certifique-se de que a frequência selecionada é a desejada!</p>
 <div class="card">
-  <div class="row">
-    <label for="mode">Exercício</label>
-    <select id="mode"><option value="free">Livre</option><option value="maj">Escala maior</option><option value="min">Escala menor natural</option></select>
-    <span id="tonW" class="hide"><label for="ton">Tônica</label> <select id="ton"></select> <label for="oct">Oitavas</label> <select id="oct"><option>1</option><option>2</option></select></span>
-    <label for="a4">Lá =</label><input type="number" id="a4" min="400" max="480" value="442">
+  <div class="grp"><label>Afinação</label><div class="seg" id="g-tmp" data-k="tmp"></div></div>
+  <div class="grp"><label>Exercício</label><div class="seg" id="g-mode" data-k="mode"></div></div>
+  <div id="scW" class="hide">
+    <div class="grp"><label>Tipo de escala</label><div class="seg" id="g-q" data-k="q"></div></div>
+    <div class="grp"><label>Tônica (nota)</label><div class="seg" id="g-li" data-k="li"></div></div>
+    <div class="grp"><label>Alteração da tônica</label><div class="seg" id="g-ac" data-k="ac"></div></div>
+    <div class="grp"><label>Oitavas</label><div class="seg" id="g-oct" data-k="oct"></div></div>
   </div>
+  <div class="row"><label for="a4">Lá =</label><input type="number" id="a4" min="400" max="480" value="442"></div>
   <button class="main" id="rec">🎻 Começar a ouvir</button>
   <div class="live"><div id="cur">–</div><div id="cents">&nbsp;</div></div>
 </div>
@@ -88,17 +94,52 @@ h2{font-size:.95rem;margin:0 0 8px;color:var(--muted);font-weight:600}
   <div id="fb"><p class="hint">Depois que você parar, o feedback aparece aqui.</p></div>
 </div>
 
-<p class="hint">A referência é o temperamento igual, o mesmo do afinador. Em música de cordas, terças maiores um pouco mais baixas (cerca de 14 cêntimos) também são aceitas. Funciona melhor em ambiente silencioso e com o microfone perto. O áudio é analisado no seu aparelho e não é gravado nem enviado.</p>
+<p class="hint" id="note"></p>
+<p class="hint" style="margin-top:8px">Funciona melhor em ambiente silencioso e com o microfone perto. O áudio é analisado no seu aparelho e não é gravado nem enviado.</p>
 </main>
 <script>
 const $=s=>document.querySelector(s);
 const NAMES=['Dó','Dó♯','Ré','Ré♯','Mi','Fá','Fá♯','Sol','Sol♯','Lá','Lá♯','Si'];
+const LN=['Dó','Ré','Mi','Fá','Sol','Lá','Si'],LP=[0,2,4,5,7,9,11],LF=[0,2,4,-1,1,3,5];   // letra: nome, classe de altura, posição na cadeia de quintas
+const AC=a=>a===0?'':a>0?'♯'.repeat(a):'♭'.repeat(-a);
+const AUTO={maj:[[0,0],[1,-1],[1,0],[2,-1],[2,0],[3,0],[3,1],[4,0],[5,-1],[5,0],[6,-1],[6,0]],min:[[0,0],[0,1],[1,0],[2,-1],[2,0],[3,0],[3,1],[4,0],[4,1],[5,0],[6,-1],[6,0]]};
 const nm=m=>NAMES[((m%12)+12)%12]+(Math.floor(m/12)-1);
 const pc=m=>((m%12)+12)%12;
+const wr=x=>(((x+600)%1200)+1200)%1200-600;
 const SC={maj:[0,2,4,5,7,9,11],min:[0,2,3,5,7,8,10]};
+const S={tmp:0,mode:'free',q:'maj',li:-1,ac:0,oct:1};
+const OPT={
+  tmp:[[0,'Não temperado'],[1,'Temperado']],
+  mode:[['free','Livre'],['scale','Escala']],
+  q:[['maj','Maior'],['min','Menor']],
+  li:[[-1,'Auto'],...LN.map((n,i)=>[i,n])],
+  ac:[[-2,'♭♭'],[-1,'♭'],[0,'♮'],[1,'♯'],[2,'♯♯']],
+  oct:[[1,'1'],[2,'2']]
+};
+Object.keys(OPT).forEach(k=>{$('#g-'+k).innerHTML=OPT[k].map(([v,l])=>`<button type="button" data-v="${v}">${l}</button>`).join('')});
+function sync(){
+  document.querySelectorAll('.seg').forEach(g=>g.querySelectorAll('button').forEach(b=>b.classList.toggle('on',String(S[g.dataset.k])===b.dataset.v)));
+  $('#scW').classList.toggle('hide',S.mode!=='scale');
+  $('#g-ac').parentNode.classList.toggle('hide',S.li<0);
+  $('#note').textContent=S.tmp?'Modo temperado: todas as notas seguem o temperamento igual, o mesmo do afinador. Na escala, a grafia (Mi♯, Fá♭ etc.) só muda o nome da nota.':'Modo não temperado (pitagórico): sustenidos são mais altos que o bemol enarmônico (Mi♯ é diferente de Fá, Fá♭ de Mi). No exercício “Livre” não há escala para definir a grafia, então a análise usa o temperado.';
+}
+document.querySelectorAll('.seg').forEach(g=>g.onclick=e=>{const b=e.target.closest('button');if(!b)return;const v=b.dataset.v;S[g.dataset.k]=isNaN(+v)?v:+v;sync()});
+sync();
+
 let ctx=null,an=null,buf=null,stream=null,rec=false,notes=[],curr=null,timer=null,t0=0;
 const a4=()=>+$('#a4').value||440;
-$('#ton').add(new Option('Automática',-1));NAMES.forEach((n,i)=>$('#ton').add(new Option(n,i)));
+
+// escala com a grafia correta: cada grau tem nome e altura esperada (cêntimos acima do Lá, dentro da oitava)
+function mkScale(li,a,q,tmp){
+  const sc=SC[q],tpc=(LP[li]+a+120)%12;
+  return sc.map((s,i)=>{
+    const l=(li+i)%7,need=(tpc+s)%12;let ac=((need-LP[l])%12+12)%12;if(ac>6)ac-=12;
+    const k=LF[l]+7*ac;
+    const e=tmp?(((LP[l]+ac-9)*100)%1200+1200)%1200:(((k-3)*701.955)%1200+1200)%1200;   // pitagórico: quintas puras de 701,955 ¢
+    return{name:LN[l]+AC(ac),e,ac};
+  });
+}
+const curDegs=()=>S.mode==='scale'&&S.li>=0?mkScale(S.li,S.ac,S.q,S.tmp):null;
 
 // Detecção de altura (YIN), faixa de violino: ~180 Hz a 2200 Hz
 function yin(x,sr){
@@ -121,18 +162,29 @@ function yin(x,sr){
 function stats(nt){
   const a=[...nt.s].sort((x,y)=>x-y),q=p=>a[Math.min(a.length-1,Math.floor(p*(a.length-1)))];
   const mean=a.reduce((s,x)=>s+x,0)/a.length;
-  nt.med=q(.5);nt.lo=q(.05);nt.hi=q(.95);    // valor típico e intervalo de variação
   nt.sd=Math.sqrt(a.reduce((s,x)=>s+(x-mean)**2,0)/a.length);
+  nt.r=[q(.05),q(.5),q(.95)];   // valores brutos em relação ao temperado
+}
+// converte o valor bruto para o desvio em relação à nota esperada da escala
+function res(nt,dg){
+  const[lo,md,hi]=nt.r;nt.out=false;nt.di=-1;nt.lab=nm(nt.midi);nt.lo=lo;nt.med=md;nt.hi=hi;
+  if(!dg)return;
+  const ab=(nt.midi-69)*100+md;let b=null;
+  dg.forEach((d,i)=>{const v=wr(ab-d.e);if(!b||Math.abs(v)<Math.abs(b.v))b={v,d,i}});
+  if(Math.abs(b.v)>50){nt.out=true;return}   // longe de qualquer grau: nota fora da escala
+  const sh=b.v-md;nt.med=b.v;nt.lo=lo+sh;nt.hi=hi+sh;nt.di=b.i;
+  const mi=Math.round(69+(ab-b.v)/100)-b.d.ac;
+  nt.lab=b.d.name+(Math.floor(mi/12)-1);
 }
 function closeNote(){
   if(!curr)return;
   const c=curr;curr=null;
   if(c.last-c.t0<0.1||c.c.length<3)return;
-  const smp=c.c.slice(Math.floor(c.c.length*.15)),prev=notes[notes.length-1];   // ignora o ataque
-  if(prev&&prev.midi===c.midi&&c.t0-prev.end<=0.3){      // mesma nota que continua: junta numa só
-    prev.s=prev.s.concat(smp);prev.end=c.last;prev.dur=prev.end-prev.t0;stats(prev);
+  const smp=c.c.slice(Math.floor(c.c.length*.15)),prev=notes[notes.length-1],dg=curDegs();   // ignora o ataque
+  if(prev&&prev.midi===c.midi&&c.t0-prev.end<=0.3){
+    prev.s=prev.s.concat(smp);prev.end=c.last;prev.dur=prev.end-prev.t0;stats(prev);res(prev,dg);
   }else{
-    const nt={midi:c.midi,t0:c.t0,end:c.last,dur:c.last-c.t0,s:smp};stats(nt);notes.push(nt);
+    const nt={midi:c.midi,t0:c.t0,end:c.last,dur:c.last-c.t0,s:smp};stats(nt);res(nt,dg);notes.push(nt);
   }
   chips();
 }
@@ -143,13 +195,13 @@ function chips(){
     const r=Math.round(n.lo)===Math.round(n.hi)?sg(n.lo):sg(n.lo)+' a '+sg(n.hi);
     const indicator=Math.abs(n.med)<=10?'☑️':(n.med>0?'⬆️':'⬇️');
     const status=Math.abs(n.med)<=10?'afinada':(n.med>0?'alta':'baixa');
-    return `<span class="chip ${k}" title="${status}">${indicator} ${nm(n.midi)} ${r}</span>`;
+    return `<span class="chip ${k}" title="${status}">${indicator} ${n.lab} ${r}</span>`;
   }).join('');
 }
 function tick(){
   an.getFloatTimeDomainData(buf);
   const now=(performance.now()-t0)/1000;
-  const need=2048+Math.floor(ctx.sampleRate/180)+2,x=buf.subarray(buf.length-need);   // trecho mais recente
+  const need=2048+Math.floor(ctx.sampleRate/180)+2,x=buf.subarray(buf.length-need);
   let e=0;for(let i=0;i<x.length;i++)e+=x[i]*x[i];
   const f=Math.sqrt(e/x.length)<0.005?-1:yin(x,ctx.sampleRate);
   if(f<0){if(curr&&now-curr.last>0.12)closeNote();return}
@@ -173,7 +225,7 @@ async function start(){
   notes=[];curr=null;chips();rec=true;
   $('#rec').textContent='■ Parar e ver o feedback';$('#rec').classList.add('rec');
   $('#fb').innerHTML='<p class="hint">Preparando o microfone… aguarde um instante.</p>';
-  await new Promise(r=>setTimeout(r,500));        // o microfone leva um instante para começar a enviar som
+  await new Promise(r=>setTimeout(r,500));
   if(!rec)return;
   t0=performance.now();
   $('#fb').innerHTML='<p><b>Pode tocar!</b> Depois toque em “Parar e ver o feedback”.</p>';
@@ -190,6 +242,23 @@ function stop(){
 function feedback(){
   const n=notes.length;
   if(n<2){$('#fb').innerHTML='<p>Não detectei notas suficientes. Toque com som firme, perto do microfone e em ambiente silencioso, e tente de novo.</p>';return}
+  const scale=S.mode==='scale',q=S.q,qn=q==='maj'?'maior':'menor natural',sc=SC[q];
+  let dg=null,tName='',tUsed=0,items=[];
+  if(scale){
+    const fit=k=>notes.filter(x=>sc.some(i=>(k+i)%12===pc(x.midi))).length;
+    let best=pc(notes[0].midi),bf=-1;
+    for(let k=0;k<12;k++){const f=fit(k);if(f>bf||(f===bf&&k===pc(notes[0].midi))){bf=f;best=k}}
+    let li,ac;
+    if(S.li<0){[li,ac]=AUTO[q][best];items.push(['g',`<b>Tom detectado:</b> ${LN[li]+AC(ac)} ${qn}.`])}
+    else{
+      li=S.li;ac=S.ac;
+      const tp=(LP[li]+ac+120)%12;
+      if(fit(best)>fit(tp)&&fit(best)/n>=0.9){const[bl,ba]=AUTO[q][best];items.push(['r',`<b>Atenção:</b> você escolheu ${LN[li]+AC(ac)}, mas as notas parecem ser de ${LN[bl]+AC(ba)} ${qn}. Mude a tônica ou use “Auto”.`])}
+    }
+    tName=LN[li]+AC(ac);tUsed=(LP[li]+ac+120)%12;
+    dg=mkScale(li,ac,q,S.tmp);
+  }
+  notes.forEach(x=>res(x,dg));chips();
   const cls=x=>Math.abs(x.med)<=10?'g':Math.abs(x.med)<=25?'y':'r';
   const cnt={g:0,y:0,r:0};notes.forEach(x=>cnt[cls(x)]++);
   const pg=Math.round(100*cnt.g/n),py=Math.round(100*cnt.y/n),pr=Math.max(0,100-pg-py);
@@ -201,57 +270,44 @@ function feedback(){
   h+=`<div class="bar" role="img" aria-label="${pg}% afinadas, ${py}% quase, ${pr}% fora"><i style="width:${pg}%;background:var(--ok)"></i><i style="width:${py}%;background:var(--mid)"></i><i style="width:${pr}%;background:var(--bad)"></i></div>`;
   h+=`<div class="tiles">${tile('g','Afinadas','até ±10 ¢',cnt.g,pg)}${tile('y','Quase','de ±10 a ±25 ¢',cnt.y,py)}${tile('r','Fora','acima de ±25 ¢',cnt.r,pr)}</div>`;
 
-  const items=[];
   if(mean>8)items.push(['y',`<b>Tendência: alto</b> (cerca de +${mean.toFixed(0)} ¢). Tente recuar os dedos um pouco, na direção da voluta.`]);
   else if(mean<-8)items.push(['y',`<b>Tendência: baixo</b> (cerca de ${mean.toFixed(0)} ¢). Tente avançar os dedos um pouco, na direção do cavalete.`]);
   else items.push(['g','<b>Tendência:</b> sem desvio geral para cima ou para baixo.']);
 
   const worst=[...notes].filter(x=>Math.abs(x.med)>15).sort((a,b)=>Math.abs(b.med)-Math.abs(a.med)).slice(0,3);
-  if(worst.length)items.push([cls(worst[0]),'<b>Notas para revisar:</b> '+worst.map(x=>`${nm(x.midi)} (${x.med>0?'alta':'baixa'} ${Math.abs(x.med).toFixed(0)} ¢)`).join(', ')+'.']);
+  if(worst.length)items.push([cls(worst[0]),'<b>Notas para revisar:</b> '+worst.map(x=>`${x.lab} (${x.med>0?'alta':'baixa'} ${Math.abs(x.med).toFixed(0)} ¢)`).join(', ')+'.']);
 
   const shaky=notes.filter(x=>x.sd>15&&x.dur>0.4).length;
   if(shaky)items.push(['y',`<b>Estabilidade:</b> ${shaky} ${shaky>1?'notas oscilaram':'nota oscilou'} bastante. Pode ser vibrato largo, arco irregular ou dedo inseguro. Experimente notas longas e retas, sem vibrato.`]);
 
-  const mode=$('#mode').value;
-  let tUsed=0;
   if(n<8)items.push(['y',`<b>Poucas notas:</b> com ${n} notas, cada uma pesa ${Math.round(100/n)}% do resultado. Olhe também o desvio médio e compare só com o mesmo exercício.`]);
-  if(mode!=='free'){
-    const sc=SC[mode],nmMode=mode==='maj'?'maior':'menor natural';
-    const fit=k=>notes.filter(x=>sc.some(i=>(k+i)%12===pc(x.midi))).length;     // notas que cabem na escala de tônica k
-    let best=pc(notes[0].midi),bf=-1;
-    for(let k=0;k<12;k++){const f=fit(k);if(f>bf||(f===bf&&k===pc(notes[0].midi))){bf=f;best=k}}
-    let t=+$('#ton').value;
-    if(t<0){t=best;items.push(['g',`<b>Tom detectado:</b> ${NAMES[t]} ${nmMode}.`])}
-    else if(fit(best)>fit(t)&&fit(best)/n>=0.9)
-      items.push(['r',`<b>Atenção:</b> você escolheu ${NAMES[t]}, mas as notas parecem ser de ${NAMES[best]} ${nmMode}. Mude a tônica ou use “Automática”.`]);
-    tUsed=t;
-    const exp=sc.map(i=>(t+i)%12),played=new Set(notes.map(x=>pc(x.midi)));
-    const outside=[...new Set(notes.filter(x=>!exp.includes(pc(x.midi))).map(x=>NAMES[pc(x.midi)]))];
-    const missing=exp.filter(p=>!played.has(p)).map(p=>NAMES[p]);
-    items.push([outside.length||missing.length?'y':'g',`<b>Escala de ${NAMES[t]} ${mode==='maj'?'maior':'menor natural'}:</b> `+
+  if(scale){
+    const played=new Set(notes.filter(x=>x.di>=0).map(x=>x.di));
+    const outside=[...new Set(notes.filter(x=>x.out).map(x=>NAMES[pc(x.midi)]))];
+    const missing=dg.filter((d,i)=>!played.has(i)).map(d=>d.name);
+    items.push([outside.length||missing.length?'y':'g',`<b>Escala de ${tName} ${qn} (${S.tmp?'temperada':'não temperada'}):</b> `+
       (outside.length?`notas fora da escala: ${outside.join(', ')}. `:'todas as notas pertencem à escala. ')+
       (missing.length?`Faltaram: ${missing.join(', ')}.`:'Todos os graus apareceram.')]);
-    if(n>=4){   // regularidade só faz sentido em escalas
+    if(n>=4){
       const io=notes.slice(1).map((x,i)=>x.t0-notes[i].t0),m=io.reduce((s,x)=>s+x,0)/io.length;
       const cv=Math.sqrt(io.reduce((s,x)=>s+(x-m)**2,0)/io.length)/m;
       items.push(cv<0.2?['g','<b>Ritmo:</b> intervalos entre as notas bem regulares.']:['y',`<b>Ritmo:</b> o tempo entre as notas variou cerca de ${Math.round(cv*100)}%. Tente um metrônomo.`]);
     }
-  }
+  }else if(!S.tmp)items.push(['y','<b>Livre:</b> sem escala escolhida, a análise usa o temperado. Escolha “Escala” para medir em modo não temperado.']);
   h+=items.map(([k,t])=>`<div class="item ${k}">${t}</div>`).join('');
-  let msg;                         // guarda a sessão para a página de progresso
+  let msg;
   if(n<3)msg='Sessão curta demais para o histórico (mínimo de 3 notas).';
   else try{
     const KEY='tuningscore:sessions',arr=JSON.parse(localStorage.getItem(KEY)||'[]');
-    arr.push({t:Date.now(),n,g:pg,y:py,r:pr,abs:Math.round(abs),mean:Math.round(mean),mode,ton:tUsed,oct:mode==='free'?0:+$('#oct').value,notes:notes.map(x=>[x.midi,Math.round(x.lo),Math.round(x.med),Math.round(x.hi),Math.round(x.dur*10)])});   // nota, variação (mín, típico, máx) e duração em décimos de segundo
+    arr.push({t:Date.now(),n,g:pg,y:py,r:pr,abs:Math.round(abs),mean:Math.round(mean),mode:scale?q:'free',ton:tUsed,sp:tName,tmp:S.tmp,oct:scale?S.oct:0,notes:notes.map(x=>[x.midi,Math.round(x.lo),Math.round(x.med),Math.round(x.hi),Math.round(x.dur*10)])});
     localStorage.setItem(KEY,JSON.stringify(arr.slice(-500)));
     msg=`✓ Sessão salva no seu histórico (${arr.length} no total).`;
   }catch(e){msg='Não consegui salvar: o navegador bloqueou o armazenamento do site (aba privada ou bloqueio de dados).'}
-  h+=`<p class="hint" style="margin-top:12px">${msg} <a href="https://viniciusfdasilva.github.io/progress/" style="color:var(--accent);font-weight:600">Ver meu progresso →</a></p>`;
+  h+=`<p class="hint" style="margin-top:12px">${msg} <a href="https://viniciusfdasilva.github.io/progress/" style="font-weight:600">Ver meu progresso →</a></p>`;
   $('#fb').innerHTML=h;
 }
 
 $('#rec').onclick=()=>rec?stop():start();
-$('#mode').onchange=()=>$('#tonW').classList.toggle('hide',$('#mode').value==='free');
 </script>
 </body>
 </html>
