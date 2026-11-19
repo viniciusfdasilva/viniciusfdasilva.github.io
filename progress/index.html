@@ -33,6 +33,8 @@ svg{display:block;width:100%;height:auto}
 .ma{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-dasharray:6 4}
 circle.g{fill:var(--ok)}circle.y{fill:var(--mid)}circle.r{fill:var(--bad)}
 rect.g{fill:var(--ok)}rect.y{fill:var(--mid)}rect.r{fill:var(--bad)}
+.dl{fill:none;stroke-width:2.5}.dl.sa{stroke:#4dabf7}.dl.sd{stroke:#b197fc}
+circle.sa{fill:#4dabf7}circle.sd{fill:#b197fc}
 .leg{display:flex;flex-wrap:wrap;gap:12px;font-size:.78rem;color:var(--muted);margin-top:8px}
 .leg i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}
 .hist{display:grid;grid-template-columns:1fr auto auto;gap:2px 10px;padding:9px 0;border-top:1px solid var(--line)}
@@ -50,6 +52,9 @@ rect.g{fill:var(--ok)}rect.y{fill:var(--mid)}rect.r{fill:var(--bad)}
 .nc-list{display:flex;flex-wrap:wrap;gap:6px}
 .nc{border-radius:999px;padding:3px 9px;font-size:.82rem;font-variant-numeric:tabular-nums;border:2px solid var(--line)}
 .nc.ok{border-color:var(--ok)}.nc.mid{border-color:var(--mid)}.nc.bad{border-color:var(--bad)}
+.cont{border:2px dashed var(--line);border-radius:14px;padding:8px 10px 10px;margin-bottom:6px}
+.cont.up{border-color:#4dabf7}.cont.dn{border-color:#b197fc}
+.ct{font-size:.8rem;font-weight:600;color:var(--muted);margin-bottom:6px}
 .nts p{margin:8px 0 0}
 .empty{text-align:center;color:var(--muted);padding:24px 8px}
 .hint{color:var(--muted);font-size:.8rem}
@@ -75,7 +80,7 @@ rect.g{fill:var(--ok)}rect.y{fill:var(--mid)}rect.r{fill:var(--bad)}
     <label for="per">Período</label>
     <select id="per"><option value="0">Tudo</option><option value="30">Últimos 30 dias</option><option value="7">Últimos 7 dias</option></select>
   </div>
-  <p class="hint hide" id="warn">Atenção: exercícios diferentes (tom, oitavas) têm dificuldades diferentes. Para uma comparação justa, escolha um exercício específico.</p>
+  <p class="hint hide" id="warn">Atenção: exercícios diferentes (tom, oitavas, afinação) têm dificuldades diferentes. Para uma comparação justa, escolha um exercício específico.</p>
   <div class="tiles" id="tiles"></div>
 
   <div class="card">
@@ -87,6 +92,14 @@ rect.g{fill:var(--ok)}rect.y{fill:var(--mid)}rect.r{fill:var(--bad)}
   <div class="card">
     <h2>Verde, laranja e vermelho (últimas 24 sessões)</h2>
     <div id="bars"></div>
+  </div>
+
+  <div class="card hide" id="dirCard">
+    <h2 id="dirT"></h2>
+    <div class="tiles" id="dirTiles"></div>
+    <div id="dirLine"></div>
+    <div class="leg"><span><i style="background:#4dabf7"></i>↗ Subida</span><span><i style="background:#b197fc"></i>↘ Descida</span></div>
+    <p class="hint" style="margin:8px 0 0">A subida e a descida são separadas pela nota de virada de cada sessão. Só entram sessões de escala.</p>
   </div>
 
   <div class="card">
@@ -102,23 +115,59 @@ const KEY='tuningscore:sessions';
 const $=s=>document.querySelector(s);
 const load=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return[]}};
 const NAMES=['Dó','Dó♯','Ré','Ré♯','Mi','Fá','Fá♯','Sol','Sol♯','Lá','Lá♯','Si'];
-const exKey=s=>s.mode==='free'?'free':`${s.mode}-${s.ton}-${s.oct||0}`;
-const exName=s=>s.mode==='free'?'Livre':`Escala de ${NAMES[s.ton]} ${s.mode==='maj'?'maior':'menor'}`+(s.oct?` · ${s.oct} ${s.oct>1?'oitavas':'oitava'}`:'');
+const LN=['Dó','Ré','Mi','Fá','Sol','Lá','Si'],LP=[0,2,4,5,7,9,11],SCL={maj:[0,2,4,5,7,9,11],min:[0,2,3,5,7,8,10]};
+const AC=a=>a===0?'':a===2?'𝄪':a>0?'♯'.repeat(a):'♭'.repeat(-a);
+const pc=m=>((m%12)+12)%12;
+const tpOf=s=>s.tmp===undefined?1:s.tmp;   // sessões antigas eram temperadas
+const exKey=s=>s.mode==='free'?'free':`${s.mode}-${s.sp||s.ton}-${s.oct||0}-${tpOf(s)}`;
+const exName=s=>s.mode==='free'?'Livre':`Escala de ${s.sp||NAMES[s.ton]} ${s.mode==='maj'?'maior':'menor'}`+(s.oct?` · ${s.oct} ${s.oct>1?'oitavas':'oitava'}`:'')+(tpOf(s)?' · temperado':' · não temperado');
 const col=p=>p>=75?'g':p>=50?'y':'r';
 const fd=t=>new Date(t).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
 const fdt=t=>new Date(t).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-const nmN=m=>NAMES[((m%12)+12)%12]+(Math.floor(m/12)-1);
+const nmN=m=>NAMES[pc(m)]+(Math.floor(m/12)-2);   // numeração francesa: Lá3 = 440 Hz
 const dirOf=m=>Math.abs(m)<=10?['☑️','afinada']:m>0?['⬆️','alta']:['⬇️','baixa'];
 const sg=v=>(Math.round(v)>=0?'+':'−')+Math.abs(Math.round(v));
-function notesHtml(ns){
+const avg=a=>a.reduce((s,x)=>s+x,0)/(a.length||1);
+
+// nomes das notas com a grafia da escala (Mi♯, Fá𝄪 etc.), a partir da tônica salva
+function labs(ns,x){
+  const nom=ns.map(n=>nmN(n[0]));
+  if(!x||x.mode==='free'||!x.sp)return nom;
+  const mt=/^(Dó|Ré|Mi|Fá|Sol|Lá|Si)(.*)$/.exec(x.sp);if(!mt||!SCL[x.mode])return nom;
+  const li=LN.indexOf(mt[1]);let a=0;for(const c of mt[2])a+=c==='♯'?1:c==='♭'?-1:c==='𝄪'?2:0;
+  const tpc=(LP[li]+a+120)%12;
+  const dg=SCL[x.mode].map((s,i)=>{const l=(li+i)%7,need=(tpc+s)%12;let ac=((need-LP[l])%12+12)%12;if(ac>6)ac-=12;return{name:LN[l]+AC(ac),ac,pc:need}});
+  return ns.map((n,i)=>{const d=dg.find(g=>g.pc===pc(n[0]));return d?d.name+(Math.floor((n[0]-d.ac)/12)-2):nom[i]});
+}
+// separa subida e descida: a virada é a nota que menos quebra o padrão "sobe até ela, desce depois"
+function split(arr,f=x=>x[0]){
+  const m=arr.map(f);let p=0,bv=1e9;
+  for(let i=0;i<m.length;i++){let v=0;for(let j=1;j<m.length;j++){if(j<=i?m[j]<m[j-1]:m[j]>m[j-1])v++}if(v<bv||(v===bv&&m[i]>m[p])){bv=v;p=i}}
+  if(arr.length<2)return{a:arr,d:[]};
+  return p>0?{a:arr.slice(0,p+1),d:arr.slice(p+1)}:{a:[],d:arr};
+}
+const dst=a=>a.length?{n:a.length,g:Math.round(100*a.filter(n=>Math.abs(n[2])<=10).length/a.length),abs:avg(a.map(n=>Math.abs(n[2]))),mean:avg(a.map(n=>n[2]))}:null;
+
+function notesHtml(ns,x){
   if(!ns||!ns.length)return '<p class="hint">Esta sessão foi salva antes do registro das notas, então não há detalhes.</p>';
-  return '<div class="nc-list">'+ns.map(([m,lo,med,hi])=>{
+  const lb=labs(ns,x),E=ns.map((n,i)=>({n,l:lb[i]}));
+  const chip=({n:[m,lo,med,hi],l})=>{
     const k=Math.abs(med)<=10?'ok':Math.abs(med)<=25?'mid':'bad',[ic,tx]=dirOf(med);
     const r=Math.round(lo)===Math.round(hi)?sg(lo):sg(lo)+' a '+sg(hi);
-    return `<span class="nc ${k}" title="${nmN(m)}: ${tx}">${nmN(m)} ${r} ${ic}</span>`;
-  }).join('')+'</div><p class="hint">☑️ afinada (até ±10 ¢) · ⬆️ alta · ⬇️ baixa. O número é a variação em cêntimos durante a nota.</p>';
+    return `<span class="nc ${k}" title="${l}: ${tx}">${l} ${r} ${ic}</span>`;
+  };
+  const lst=a=>'<div class="nc-list">'+a.map(chip).join('')+'</div>';
+  let body;
+  if(x&&x.mode!=='free'&&E.length>=2){
+    const sp=split(E,e=>e.n[0]),L=a=>a[a.length-1].l;
+    const box=(t,c,a)=>`<div class="cont ${c}"><div class="ct">${t}</div>${lst(a)}</div>`;
+    body=(sp.a.length?box(`↗ Subida (${sp.a[0].l} → ${L(sp.a)})`,'up',sp.a):'')+(sp.d.length?box(`↘ Descida (${sp.a.length?L(sp.a):sp.d[0].l} → ${L(sp.d)})`,'dn',sp.d):'');
+    const sa=dst(sp.a.map(e=>e.n)),sd=dst(sp.d.map(e=>e.n));
+    const ln=(t,s)=>s?`${t}: ${s.g}% afinadas, desvio médio ${Math.round(s.abs)} ¢`:'';
+    body+=`<p class="hint">${[ln('↗ Subida',sa),ln('↘ Descida',sd)].filter(Boolean).join(' · ')}${sa&&sd?` · diferença (descida − subida): ${sg(sd.mean-sa.mean)} ¢`:''}</p>`;
+  }else body=lst(E);
+  return body+'<p class="hint">☑️ afinada (até ±10 ¢) · ⬆️ alta · ⬇️ baixa. O número é a variação em cêntimos durante a nota.</p>';
 }
-const avg=a=>a.reduce((s,x)=>s+x,0)/(a.length||1);
 
 function line(d,met){
   const W=600,H=220,L=40,R=10,T=10,B=26,w=W-L-R,h=H-T-B,m=d.length,pct=met==='g';
@@ -134,6 +183,22 @@ function line(d,met){
     s+=`<polyline class="ma" points="${ma.map((v,i)=>X(i)+','+Y(v)).join(' ')}"/>`;
   }
   d.forEach((x,i)=>s+=`<circle class="${cl(x)}" cx="${X(i)}" cy="${Y(val(x))}" r="${m>60?2:4.5}"><title>${fdt(x.t)}: ${pct?x.g+'% afinadas':x.abs+' ¢ de desvio médio'}</title></circle>`);
+  [...new Set([0,Math.floor((m-1)/2),m-1])].forEach(i=>s+=`<text class="ax" x="${X(i)}" y="${H-6}" text-anchor="middle">${fd(d[i].t)}</text>`);
+  return s+'</svg>';
+}
+// duas linhas: subida e descida por sessão
+function dline(d,met){
+  const W=600,H=200,L=40,R=10,T=10,B=26,w=W-L-R,h=H-T-B,m=d.length,pct=met==='g',k=pct?'g':'abs';
+  const vs=d.flatMap(x=>[x.da,x.dd]).filter(Boolean).map(z=>z[k]);
+  const mx=pct?100:Math.max(20,Math.ceil(Math.max(...vs)/5)*5);
+  const X=i=>L+(m===1?w/2:i*w/(m-1)),Y=v=>T+(1-v/mx)*h;
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Subida e descida por sessão">`;
+  [0,.5,1].forEach(f=>{const v=f*mx;s+=`<line class="gl" x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}"/><text class="ax" x="${L-6}" y="${Y(v)+4}" text-anchor="end">${Math.round(v)}${pct?'%':'¢'}</text>`});
+  [['da','sa','subida'],['dd','sd','descida']].forEach(([f,c,nome])=>{
+    const pts=d.map((x,i)=>x[f]?[X(i),Y(x[f][k]),x]:null).filter(Boolean);
+    if(pts.length>1)s+=`<polyline class="dl ${c}" points="${pts.map(p=>p[0]+','+p[1]).join(' ')}"/>`;
+    pts.forEach(p=>s+=`<circle class="${c}" cx="${p[0]}" cy="${p[1]}" r="${m>60?2:4.5}"><title>${fdt(p[2].t)}, ${nome}: ${pct?p[2][f].g+'% afinadas':Math.round(p[2][f].abs)+' ¢ de desvio médio'}</title></circle>`);
+  });
   [...new Set([0,Math.floor((m-1)/2),m-1])].forEach(i=>s+=`<text class="ax" x="${X(i)}" y="${H-6}" text-anchor="middle">${fd(d[i].t)}</text>`);
   return s+'</svg>';
 }
@@ -165,6 +230,7 @@ function render(){
   const d=all.filter(x=>(ex==='all'||exKey(x)===ex)&&(!days||x.t>=Date.now()-days*864e5));
   $('#warn').classList.toggle('hide',!(ex==='all'&&Object.keys(cnt).length>1));
   if(!d.length){
+    $('#dirCard').classList.add('hide');
     $('#tiles').innerHTML='';$('#line').innerHTML=$('#bars').innerHTML=$('#hist').innerHTML='<p class="empty">Nenhuma sessão nesse filtro.</p>';return;
   }
   const last=d[d.length-1],mean=Math.round(avg(d.map(x=>x.g))),best=Math.max(...d.map(x=>x.g)),ad=Math.round(avg(d.map(x=>x.abs)));
@@ -179,8 +245,21 @@ function render(){
   $('#legend').innerHTML=(pct?'<span><i style="background:var(--ok)"></i>75% ou mais</span><span><i style="background:var(--mid)"></i>50 a 74%</span><span><i style="background:var(--bad)"></i>abaixo de 50%</span>':'<span><i style="background:var(--ok)"></i>até 8 ¢</span><span><i style="background:var(--mid)"></i>até 15 ¢</span><span><i style="background:var(--bad)"></i>acima de 15 ¢</span>')+'<span>Tracejado: média das últimas 5 sessões</span>';
   $('#line').innerHTML=line(d,met);
   $('#bars').innerHTML=bars(d);
+
+  // subida × descida (só sessões de escala)
+  const ds=d.filter(x=>x.mode!=='free'&&x.notes&&x.notes.length>=2).map(x=>{const sp=split(x.notes);return{t:x.t,da:dst(sp.a),dd:dst(sp.d)}}).filter(x=>x.da||x.dd);
+  $('#dirCard').classList.toggle('hide',!ds.length);
+  if(ds.length){
+    const k=pct?'g':'abs',u=pct?'%':' ¢',cv=v=>pct?col(v):(v<=8?'g':v<=15?'y':'r');
+    const A=ds.filter(x=>x.da),D=ds.filter(x=>x.dd),B=ds.filter(x=>x.da&&x.dd);
+    const ma=A.length?Math.round(avg(A.map(x=>x.da[k]))):null,md=D.length?Math.round(avg(D.map(x=>x.dd[k]))):null;
+    const bi=B.length?Math.round(avg(B.map(x=>x.dd.mean-x.da.mean))):null;
+    $('#dirT').textContent='Subida × descida ('+(pct?'notas afinadas, %':'desvio médio, ¢')+')';
+    $('#dirTiles').innerHTML=tile(ma===null?'–':ma+u,'↗ subida (média)',ma===null?'':cv(ma))+tile(md===null?'–':md+u,'↘ descida (média)',md===null?'':cv(md))+tile(bi===null?'–':sg(bi)+' ¢','descida − subida (tendência)',bi===null?'':Math.abs(bi)<=10?'g':Math.abs(bi)<=25?'y':'r');
+    $('#dirLine').innerHTML=dline(ds,met);
+  }
   $('#hist').innerHTML=[...d].reverse().slice(0,15).map(x=>
-    `<div class="hist" tabindex="0" role="button" aria-expanded="false" title="Ver as notas desta sessão"><span>${fdt(x.t)}</span><b class="${col(x.g)}">${x.g}%</b><small>${exName(x)} · ${x.n} notas · desvio médio ${x.abs} ¢</small><button class="del" data-t="${x.t}" title="Apagar esta sessão" aria-label="Apagar esta sessão">🗑</button><div class="nts">${notesHtml(x.notes)}</div></div>`).join('');
+    `<div class="hist" tabindex="0" role="button" aria-expanded="false" title="Ver as notas desta sessão"><span>${fdt(x.t)}</span><b class="${col(x.g)}">${x.g}%</b><small>${exName(x)} · ${x.n} notas · desvio médio ${x.abs} ¢</small><button class="del" data-t="${x.t}" title="Apagar esta sessão" aria-label="Apagar esta sessão">🗑</button><div class="nts">${notesHtml(x.notes,x)}</div></div>`).join('');
 }
 $('#per').onchange=render;$('#ex').onchange=render;$('#met').onchange=render;
 const toggleRow=r=>r.setAttribute('aria-expanded',r.classList.toggle('open'));
