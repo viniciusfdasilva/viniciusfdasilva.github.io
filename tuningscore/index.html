@@ -107,7 +107,7 @@ const NAMES=['Dó','Dó♯','Ré','Ré♯','Mi','Fá','Fá♯','Sol','Sol♯','L
 const LN=['Dó','Ré','Mi','Fá','Sol','Lá','Si'],LP=[0,2,4,5,7,9,11],LF=[0,2,4,-1,1,3,5];   // letra: nome, classe de altura, posição na cadeia de quintas
 const AC=a=>a===0?'':a===2?'𝄪':a>0?'♯'.repeat(a):'♭'.repeat(-a);
 const AUTO={maj:[[0,0],[1,-1],[1,0],[2,-1],[2,0],[3,0],[3,1],[4,0],[5,-1],[5,0],[6,-1],[6,0]],min:[[0,0],[0,1],[1,0],[2,-1],[2,0],[3,0],[3,1],[4,0],[4,1],[5,0],[6,-1],[6,0]]};
-const nm=m=>NAMES[((m%12)+12)%12]+(Math.floor(m/12)-1);
+const nm=m=>NAMES[((m%12)+12)%12]+(Math.floor(m/12)-2);
 const pc=m=>((m%12)+12)%12;
 const wr=x=>(((x+600)%1200)+1200)%1200-600;
 const SC={maj:[0,2,4,5,7,9,11],min:[0,2,3,5,7,8,10]};
@@ -178,7 +178,7 @@ function res(nt,dg){
   if(Math.abs(b.v)>50){nt.out=true;return}   // longe de qualquer grau: nota fora da escala
   const sh=b.v-md;nt.med=b.v;nt.lo=lo+sh;nt.hi=hi+sh;nt.di=b.i;
   const mi=Math.round(69+(ab-b.v)/100)-b.d.ac;
-  nt.lab=b.d.name+(Math.floor(mi/12)-1);
+  nt.lab=b.d.name+(Math.floor(mi/12)-2);
 }
 function closeNote(){
   if(!curr)return;
