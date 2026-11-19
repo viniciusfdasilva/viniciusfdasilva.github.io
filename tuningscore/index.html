@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
+<script data-goatcounter="https://viniciusilva.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Assistente de violino</title>
 <style>
@@ -56,6 +57,14 @@ h2{font-size:.95rem;margin:0 0 8px;color:var(--muted);font-weight:600}
 .item{border-left:4px solid var(--line);padding:4px 0 4px 12px;margin:12px 0 0}
 .item.g{border-color:var(--ok)}.item.y{border-color:var(--mid)}.item.r{border-color:var(--bad)}
 .eye{width:40px;height:40px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.cont{flex:1 1 100%;border:2px dashed var(--line);border-radius:14px;padding:8px 10px 10px;margin-bottom:6px}
+.cont.up{border-color:#4dabf7}.cont.dn{border-color:#b197fc}
+.ct{font-size:.8rem;font-weight:600;color:var(--muted);margin-bottom:6px}
+.cmp{width:100%;border-collapse:collapse;font-size:.85rem;font-variant-numeric:tabular-nums;margin-top:8px}
+.cmp th,.cmp td{padding:6px 4px;border-bottom:1px solid var(--line);text-align:center}
+.cmp th{color:var(--muted);font-weight:600;font-size:.75rem}
+.cmp td:first-child{text-align:left;font-weight:600}
+.cmp td.g{color:var(--ok)}.cmp td.y{color:var(--mid)}.cmp td.r{color:var(--bad)}
 .hide{display:none!important}
 </style>
 </head>
@@ -85,7 +94,7 @@ h2{font-size:.95rem;margin:0 0 8px;color:var(--muted);font-weight:600}
 <div class="card">
   <h2>Notas detectadas</h2>
   <div class="chips" id="chips"></div>
-  <p class="hint" style="margin-top:8px">Cada nota aparece uma vez, com a variação em cêntimos durante ela (100 cêntimos = 1 semitom). A cor segue o valor típico: verde até ±10, laranja até ±25, vermelho acima disso.</p>
+  <p class="hint" style="margin-top:8px">Cada nota aparece uma vez, com a variação em cêntimos durante ela (100 cêntimos = 1 semitom). A cor segue o valor típico: verde até ±10, laranja até ±25, vermelho acima disso. Na escala, as notas ficam em dois contornos: subida e descida.</p>
   <div class="legend" aria-label="Legenda das cores">
     <span><i class="lg"></i> Verde: afinada (até ±10 ¢)</span>
     <span><i class="ly"></i> Laranja: quase afinada (acima de ±10 até ±25 ¢)</span>
@@ -192,15 +201,26 @@ function closeNote(){
   }
   chips();
 }
+// ponto de virada = nota que menos quebra o padrão "sobe até ela, desce depois dela" (empate: a mais alta)
+function dirs(){
+  const m=notes.map(x=>x.midi);let p=0,bv=1e9;
+  for(let i=0;i<m.length;i++){let v=0;for(let j=1;j<m.length;j++){if(j<=i?m[j]<m[j-1]:m[j]>m[j-1])v++}if(v<bv||(v===bv&&m[i]>m[p])){bv=v;p=i}}
+  notes.forEach((x,i)=>x.dir=notes.length===1||(i<=p&&p>0)?'a':'d');
+}
 const sg=v=>(Math.round(v)>=0?'+':'−')+Math.abs(Math.round(v));
 function chips(){
-  $('#chips').innerHTML=notes.map(n=>{
+  if(S.mode==='scale')dirs();
+  const mk=n=>{
     const k=Math.abs(n.med)<=10?'g':Math.abs(n.med)<=25?'y':'r';
     const r=Math.round(n.lo)===Math.round(n.hi)?sg(n.lo):sg(n.lo)+' a '+sg(n.hi);
     const indicator=Math.abs(n.med)<=10?'☑️':(n.med>0?'⬆️':'⬇️');
     const status=Math.abs(n.med)<=10?'afinada':(n.med>0?'alta':'baixa');
     return `<span class="chip ${k}" title="${status}">${indicator} ${n.lab} ${r}</span>`;
-  }).join('');
+  };
+  const box=(t,c,a)=>`<div class="cont ${c}"><div class="ct">${t}</div><div class="chips">${a.map(mk).join('')}</div></div>`;
+  if(S.mode!=='scale'||notes.length<2){$('#chips').innerHTML=notes.map(mk).join('');return}
+  const A=notes.filter(x=>x.dir==='a'),D=notes.filter(x=>x.dir==='d'),L=a=>a[a.length-1].lab,top=A.length?A[A.length-1]:null;
+  $('#chips').innerHTML=(A.length?box(`↗ Subida (${A[0].lab} → ${L(A)})`,'up',A):'')+(D.length?box(`↘ Descida (${(top||D[0]).lab} → ${L(D)})`,'dn',D):'');
 }
 function tick(){
   an.getFloatTimeDomainData(buf);
@@ -243,11 +263,19 @@ function stop(){
   feedback();
 }
 
+function cmpTbl(A,D,dg){
+  const av=(a,i)=>{const s=a.filter(x=>x.di===i);return s.length?s.reduce((t,x)=>t+x.med,0)/s.length:null};
+  const cc=v=>Math.abs(v)<=10?'g':Math.abs(v)<=25?'y':'r';
+  const cell=v=>v===null?'<td>–</td>':`<td class="${cc(v)}">${sg(v)}</td>`;
+  const r=dg.map((d,i)=>{const a=av(A,i),b=av(D,i);return a===null&&b===null?'':`<tr><td>${d.name}</td>${cell(a)}${cell(b)}<td>${a===null||b===null?'–':sg(b-a)}</td></tr>`}).join('');
+  const ma=A.reduce((t,x)=>t+x.med,0)/A.length,mb=D.reduce((t,x)=>t+x.med,0)/D.length;
+  return `<h2 style="margin-top:16px">Subida × descida, por grau (¢)</h2><table class="cmp"><tr><th>Grau</th><th>↗ Subida</th><th>↘ Descida</th><th>Dif.</th></tr>${r}<tr><td>Média</td>${cell(ma)}${cell(mb)}<td>${sg(mb-ma)}</td></tr></table><p class="hint" style="margin-top:6px">Dif. = descida − subida. Positivo: mais alta na descida.</p>`;
+}
 function feedback(){
   const n=notes.length;
   if(n<2){$('#fb').innerHTML='<p>Não detectei notas suficientes. Toque com som firme, perto do microfone e em ambiente silencioso, e tente de novo.</p>';return}
   const scale=S.mode==='scale',q=S.q,qn=q==='maj'?'maior':'menor natural',sc=SC[q];
-  let dg=null,tName='',tUsed=0,items=[];
+  let dg=null,tName='',tUsed=0,items=[],tbl='';
   if(scale){
     const fit=k=>notes.filter(x=>sc.some(i=>(k+i)%12===pc(x.midi))).length;
     let best=pc(notes[0].midi),bf=-1;
@@ -292,13 +320,31 @@ function feedback(){
     items.push([outside.length||missing.length?'y':'g',`<b>Escala de ${tName} ${qn} (${S.tmp?'temperada':'não temperada'}):</b> `+
       (outside.length?`notas fora da escala: ${outside.join(', ')}. `:'todas as notas pertencem à escala. ')+
       (missing.length?`Faltaram: ${missing.join(', ')}.`:'Todos os graus apareceram.')]);
+    dirs();
+    const asc=notes.filter(x=>x.dir==='a'),dsc=notes.filter(x=>x.dir==='d');
+    const A=asc.length>=2?asc:[],D=A.length?dsc:notes,top=A.length?asc[asc.length-1]:null;   // o ponto mais alto conta na subida
+    const dr=(nome,a,ex)=>{
+      const c=a.filter(x=>Math.abs(x.med)<=10).length,pd=Math.round(100*c/a.length),ab=a.reduce((s,x)=>s+Math.abs(x.med),0)/a.length,mn=a.reduce((s,x)=>s+x.med,0)/a.length;
+      const pl=new Set(a.filter(x=>x.di>=0).map(x=>x.di));if(ex&&ex.di>=0)pl.add(ex.di);
+      const ms=dg.filter((d,i)=>!pl.has(i)).map(d=>d.name);
+      const te=mn>8?`tendência alta (+${mn.toFixed(0)} ¢)`:mn<-8?`tendência baixa (${mn.toFixed(0)} ¢)`:'sem desvio geral';
+      items.push([pd>=75?'g':pd>=50?'y':'r',`<b>${nome}</b> (${(ex||a[0]).lab} → ${a[a.length-1].lab}, ${a.length} ${a.length>1?'notas':'nota'}): ${pd}% afinadas, desvio médio ${ab.toFixed(0)} ¢, ${te}.`+(ms.length?` Faltaram: ${ms.join(', ')}.`:'')]);
+      return mn;
+    };
+    let mA=null,mD=null;
+    if(A.length)mA=dr('Subida',A);
+    if(D.length&&(A.length||D.length>1))mD=dr('Descida',D,top);
+    if(mA!==null&&mD!==null){tbl=cmpTbl(A,D,dg);items.push(['g',`<b>Virada detectada:</b> a subida termina em ${top.lab} (nota ${A.length} de ${n}) e a descida começa em seguida.`]);const df=mD-mA;if(Math.abs(df)>10)items.push(['y',`<b>Subida × descida:</b> na descida você ficou mais ${df>0?'alto':'baixo'} que na subida (${Math.abs(df).toFixed(0)} ¢ de diferença).`])}
+    else if(mA!==null)items.push(['g','<b>Direção:</b> só detectei a subida. Toque também a descida para comparar.']);
+    else if(mD===null)items.push(['g','<b>Direção:</b> poucas notas para separar subida e descida.']);
+    else items.push(['g','<b>Direção:</b> só detectei a descida. Toque também a subida para comparar.']);
     if(n>=4){
       const io=notes.slice(1).map((x,i)=>x.t0-notes[i].t0),m=io.reduce((s,x)=>s+x,0)/io.length;
       const cv=Math.sqrt(io.reduce((s,x)=>s+(x-m)**2,0)/io.length)/m;
       items.push(cv<0.2?['g','<b>Ritmo:</b> intervalos entre as notas bem regulares.']:['y',`<b>Ritmo:</b> o tempo entre as notas variou cerca de ${Math.round(cv*100)}%. Tente um metrônomo.`]);
     }
   }else if(!S.tmp)items.push(['y','<b>Livre:</b> sem escala escolhida, a análise usa o temperado. Escolha “Escala” para medir em modo não temperado.']);
-  h+=items.map(([k,t])=>`<div class="item ${k}">${t}</div>`).join('');
+  h+=items.map(([k,t])=>`<div class="item ${k}">${t}</div>`).join('')+tbl;
   let msg;
   if(n<3)msg='Sessão curta demais para o histórico (mínimo de 3 notas).';
   else try{
