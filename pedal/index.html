@@ -131,7 +131,7 @@ input[type=number] {
     font: inherit;
 }
 
-button.stop, button.q {
+button.stop, button.q, button.sg {
     background: var(--card);
     color: var(--fg);
     border: 1px solid var(--line);
@@ -141,14 +141,16 @@ button.stop, button.q {
     cursor: pointer;
 }
 
-button.q { padding: 8px 10px; min-width: 52px; }
-button.q.on { background: var(--fg); color: var(--bg); border-color: var(--fg); font-weight: 600; }
+button.q, button.sg { padding: 8px 10px; min-width: 52px; }
+button.q.on, button.sg.on { background: var(--fg); color: var(--bg); border-color: var(--fg); font-weight: 600; }
 
 #shift { font-size: .8rem; color: var(--muted); margin: 0 0 12px; }
 
 #now { font-size: .85rem; color: var(--muted); min-height: 1.4em; margin-bottom: 10px; }
 
 .hint { color: var(--muted); font-size: .8rem; margin: 10px 0 0; }
+
+.hide { display: none !important; }
 
 .credits {
     margin-top: 24px;
@@ -183,6 +185,23 @@ button.q.on { background: var(--fg); color: var(--bg); border-color: var(--fg); 
     <div id="now">Pronto. Escolha uma nota.</div>
 
     <div class="row">
+        <label>Afinação</label>
+        <button type="button" class="sg" data-t="1">Temperado</button>
+        <button type="button" class="sg" data-t="0">Não temperado</button>
+    </div>
+
+    <div class="row" id="acW">
+        <label>Alteração</label>
+        <button type="button" class="sg" data-a="-2">♭♭</button>
+        <button type="button" class="sg" data-a="-1">♭</button>
+        <button type="button" class="sg" data-a="0">♮</button>
+        <button type="button" class="sg" data-a="1">♯</button>
+        <button type="button" class="sg" data-a="2">𝄪</button>
+    </div>
+
+    <p class="hint" id="mode" style="margin:0 0 12px"></p>
+
+    <div class="row">
         <label for="a4">Lá =</label>
         <input type="number" id="a4" min="400" max="480" step="0.1" value="440" inputmode="decimal">
         <label for="a4">Hz</label>
@@ -205,12 +224,15 @@ button.q.on { background: var(--fg); color: var(--bg); border-color: var(--fg); 
     </div>
 
     <p class="hint">
-        Os áudios originais estão afinados em Lá = 440 Hz. Para outras
-        afinações, o navegador acelera ou desacelera o áudio na mesma
-        proporção (por exemplo, 442 Hz muda a velocidade em cerca de 0,45%),
-        o que também desloca o tom. Em notas sustentadas como estas, a
-        diferença de velocidade não é perceptível. Os áudios são
-        reproduzidos diretamente dos arquivos MP3 hospedados no projeto Pedal.
+        Os áudios originais estão afinados em Lá = 440 Hz, em temperamento
+        igual. Para outras afinações, o navegador acelera ou desacelera o
+        áudio na mesma proporção (por exemplo, 442 Hz muda a velocidade em
+        cerca de 0,45%), o que também desloca o tom. O modo não temperado
+        usa o mesmo mecanismo: cada nota recebe um pequeno ajuste em
+        cêntimos (no máximo cerca de 1,2% de velocidade). Em notas
+        sustentadas como estas, a diferença de velocidade não é
+        perceptível. Os áudios são reproduzidos diretamente dos arquivos
+        MP3 hospedados no projeto Pedal.
     </p>
 
 </div>
@@ -244,8 +266,10 @@ const AUDIO_BASE = 'https://viniciusfdasilva.github.io/pedal/';
 
 const BASE_A4 = 440;
 const KEY = 'pads:a4';
+const KEY_T = 'pads:tmp';
+const KEY_A = 'pads:ac';
 
-// Notas e respectivos arquivos
+// Modo temperado: notas e respectivos arquivos
 
 const NOTES = [
     { name: 'Dó',  alt: '',       file: 'c.mp3' },
@@ -262,7 +286,23 @@ const NOTES = [
     { name: 'Si',  alt: '',       file: 'b.mp3' }
 ];
 
+// Modo não temperado (pitagórico): mesma regra do assistente de violino.
+// Cada letra tem uma posição na cadeia de quintas a partir do Lá; cada
+// quinta pura (701,955 ¢) fica 1,955 ¢ acima da quinta temperada (700 ¢).
+
+const LN = ['Dó', 'Ré', 'Mi', 'Fá', 'Sol', 'Lá', 'Si'];
+const LP = [0, 2, 4, 5, 7, 9, 11];     // classe de altura de cada letra
+const LF = [0, 2, 4, -1, 1, 3, 5];     // posição na cadeia de quintas
+const FILES = ['c', 'db', 'd', 'eb', 'e', 'f', 'gb', 'g', 'ab', 'a', 'bb', 'b'].map(x => x + '.mp3');
+const FIFTH = 701.955 - 700;
+
+const AC = a => a === 0 ? '' : a === 2 ? '𝄪' : a > 0 ? '♯'.repeat(a) : '♭'.repeat(-a);
+
 const $ = s => document.querySelector(s);
+
+const fmt = v => String(Math.round(v * 10) / 10).replace('.', ',');
+
+const sg = v => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(1).replace('.', ',');
 
 // Estado do player
 
@@ -271,15 +311,46 @@ let audio = new Audio();
 audio.loop = true;
 audio.preload = 'none';
 
-let cur = -1;
+let cur = null;       // id do pad atual
+let curP = null;      // dados do pad atual
 let playing = false;
 let a4 = BASE_A4;
+let tmp = 1;          // 1 = temperado, 0 = não temperado
+let ac = 0;           // alteração (modo não temperado)
+
+// Lista de pads do modo atual
+
+function pads() {
+
+    if (tmp) {
+        return NOTES.map(n => ({
+            id: n.file, label: n.name, sub: n.alt,
+            alt: !!n.alt, file: n.file, cents: 0
+        }));
+    }
+
+    return LN.map((n, l) => {
+
+        const pc = (LP[l] + ac + 120) % 12;
+        const k = LF[l] + 7 * ac;
+        const c = (k - 3) * FIFTH;       // cêntimos em relação ao temperado
+
+        return {
+            id: n + ac, label: n + AC(ac), sub: sg(c) + ' ¢',
+            alt: ac !== 0, file: FILES[pc], cents: c
+        };
+
+    });
+
+}
 
 // Afinação: muda a velocidade e o tom juntos (preservesPitch desligado)
 
 function applyPitch() {
 
-    const r = a4 / BASE_A4;
+    const base = a4 / BASE_A4;
+    const pad = curP ? curP.cents : 0;
+    const r = base * Math.pow(2, pad / 1200);
 
     audio.defaultPlaybackRate = r;   // sobrevive à troca de arquivo
     audio.playbackRate = r;
@@ -288,7 +359,7 @@ function applyPitch() {
     audio.mozPreservesPitch = false;
     audio.webkitPreservesPitch = false;
 
-    const cents = 1200 * Math.log2(r);
+    const cents = 1200 * Math.log2(base);
 
     $('#shift').textContent = Math.abs(cents) < 0.05
         ? 'Lá = ' + fmt(a4) + ' Hz (som original, sem alteração).'
@@ -302,7 +373,13 @@ function applyPitch() {
 
 }
 
-const fmt = v => String(Math.round(v * 10) / 10).replace('.', ',');
+function playMsg() {
+
+    return 'Tocando: ' + curP.label +
+        (tmp ? '' : ' (' + sg(curP.cents) + ' ¢ em relação ao temperado)') +
+        ' · Lá = ' + fmt(a4) + ' Hz';
+
+}
 
 function setA4(v) {
 
@@ -314,35 +391,63 @@ function setA4(v) {
 
     try { localStorage.setItem(KEY, String(v)); } catch (e) {}
 
-    if (playing && cur >= 0) {
-        $('#now').textContent = 'Tocando: ' + NOTES[cur].name + ' (Lá = ' + fmt(a4) + ' Hz)';
-    }
+    if (playing && curP) $('#now').textContent = playMsg();
 
 }
 
-// Criar os pads
+// Criar os pads do modo atual
 
-NOTES.forEach((note, i) => {
+function render() {
 
-    const b = document.createElement('button');
+    if (playing) pause(true);
 
-    b.className = 'pad' + (note.alt ? ' alt' : '');
+    cur = null;
+    curP = null;
 
-    b.innerHTML = `${note.name}<small>${note.alt || '&nbsp;'}</small>`;
+    $('#now').textContent = 'Pronto. Escolha uma nota.';
 
-    b.onclick = () => toggle(i);
+    const g = $('#grid');
 
-    $('#grid').appendChild(b);
+    g.innerHTML = '';
 
-});
+    pads().forEach(p => {
+
+        const b = document.createElement('button');
+
+        b.className = 'pad' + (p.alt ? ' alt' : '');
+        b.dataset.id = p.id;
+        b.innerHTML = `${p.label}<small>${p.sub || '&nbsp;'}</small>`;
+        b.onclick = () => toggle(p);
+
+        g.appendChild(b);
+
+    });
+
+    document.querySelectorAll('.sg[data-t]').forEach(b => {
+        b.classList.toggle('on', Number(b.dataset.t) === tmp);
+    });
+
+    document.querySelectorAll('.sg[data-a]').forEach(b => {
+        b.classList.toggle('on', Number(b.dataset.a) === ac);
+    });
+
+    $('#acW').classList.toggle('hide', !!tmp);
+
+    $('#mode').textContent = tmp
+        ? 'Modo temperado: os mesmos 12 sons do afinador.'
+        : 'Modo não temperado (pitagórico): escolha a letra e a alteração, como na tônica do assistente de violino. Mi♯ soa 15,6 ¢ acima do Fá temperado, e Fá𝄪 19,6 ¢ acima do Sol. O número em cada pad é o desvio em relação ao temperado.';
+
+    applyPitch();
+
+}
 
 // Atualizar aparência dos pads
 
 function paint() {
 
-    document.querySelectorAll('.pad').forEach((b, i) => {
+    document.querySelectorAll('.pad').forEach(b => {
 
-        b.classList.toggle('on', playing && i === cur);
+        b.classList.toggle('on', playing && b.dataset.id === cur);
 
     });
 
@@ -350,11 +455,11 @@ function paint() {
 
 // Reproduzir ou pausar uma nota
 
-function toggle(i) {
+function toggle(p) {
 
     // Se clicar na mesma nota, pausa
 
-    if (playing && cur === i) {
+    if (playing && cur === p.id) {
 
         pause();
 
@@ -369,7 +474,8 @@ function toggle(i) {
 
     // Atualizar nota selecionada
 
-    cur = i;
+    cur = p.id;
+    curP = p;
 
     playing = false;
 
@@ -377,15 +483,13 @@ function toggle(i) {
 
     // Carregar o arquivo correspondente
 
-    const file = NOTES[i].file;
-
-    audio.src = AUDIO_BASE + file;
+    audio.src = AUDIO_BASE + p.file;
 
     audio.loop = true;
 
     applyPitch();
 
-    $('#now').textContent = 'Carregando: ' + NOTES[i].name + '...';
+    $('#now').textContent = 'Carregando: ' + p.label + '...';
 
     // Aplicar volume
 
@@ -399,7 +503,7 @@ function toggle(i) {
 
         applyPitch();
 
-        $('#now').textContent = 'Tocando: ' + NOTES[i].name + ' (Lá = ' + fmt(a4) + ' Hz)';
+        $('#now').textContent = playMsg();
 
         paint();
 
@@ -410,7 +514,7 @@ function toggle(i) {
         paint();
 
         $('#now').textContent =
-            'Erro ao reproduzir ' + file + '. Verifique a conexão e o arquivo.';
+            'Erro ao reproduzir ' + p.file + '. Verifique a conexão e o arquivo.';
 
         console.error('Erro de reprodução:', error);
 
@@ -420,13 +524,13 @@ function toggle(i) {
 
 // Pausar reprodução
 
-function pause() {
+function pause(quiet) {
 
     audio.pause();
 
     playing = false;
 
-    $('#now').textContent = 'Reprodução pausada.';
+    if (!quiet) $('#now').textContent = 'Reprodução pausada.';
 
     paint();
 
@@ -454,10 +558,10 @@ audio.addEventListener('pause', () => {
 
 audio.addEventListener('error', () => {
 
-    if (cur >= 0) {
+    if (curP) {
 
         $('#now').textContent =
-            'Não foi possível carregar o áudio: ' + NOTES[cur].file;
+            'Não foi possível carregar o áudio: ' + curP.file;
 
         playing = false;
 
@@ -475,7 +579,7 @@ $('#vol').oninput = e => {
 
 };
 
-// Controle de afinação
+// Controle de afinação do Lá
 
 $('#a4').oninput = e => {
 
@@ -495,6 +599,36 @@ document.querySelectorAll('.q').forEach(b => {
 
 });
 
+// Temperado / não temperado e alteração
+
+document.querySelectorAll('.sg[data-t]').forEach(b => {
+
+    b.onclick = () => {
+
+        tmp = Number(b.dataset.t);
+
+        try { localStorage.setItem(KEY_T, String(tmp)); } catch (e) {}
+
+        render();
+
+    };
+
+});
+
+document.querySelectorAll('.sg[data-a]').forEach(b => {
+
+    b.onclick = () => {
+
+        ac = Number(b.dataset.a);
+
+        try { localStorage.setItem(KEY_A, String(ac)); } catch (e) {}
+
+        render();
+
+    };
+
+});
+
 // Botão de pausa
 
 $('#stop').onclick = () => {
@@ -503,7 +637,7 @@ $('#stop').onclick = () => {
 
 };
 
-// Recuperar a última afinação usada
+// Recuperar as últimas configurações usadas
 
 try {
 
@@ -517,9 +651,17 @@ try {
 
     }
 
+    const st = localStorage.getItem(KEY_T);
+
+    if (st === '0' || st === '1') tmp = Number(st);
+
+    const sa = parseInt(localStorage.getItem(KEY_A), 10);
+
+    if (sa >= -2 && sa <= 2) ac = sa;
+
 } catch (e) {}
 
-applyPitch();
+render();
 
 </script>
 
