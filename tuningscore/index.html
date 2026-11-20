@@ -27,6 +27,7 @@ label{font-size:.85rem;color:var(--muted)}
 input[type=number]{background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;width:80px}
 button.main{background:var(--fg);color:var(--bg);border:1px solid var(--fg);border-radius:10px;padding:12px;font:inherit;font-weight:600;font-size:1.05rem;cursor:pointer;width:100%}
 button.main.rec{background:var(--bad);border-color:var(--bad);color:#fff}
+#hear{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:10px;padding:10px 14px;font:inherit;cursor:pointer;min-height:44px}
 .live{text-align:center;margin:12px 0 4px}
 #cur{font-size:2.6rem;font-weight:700;line-height:1}
 #cents{color:var(--muted);font-variant-numeric:tabular-nums;min-height:1.4em}
@@ -84,6 +85,7 @@ h2{font-size:.95rem;margin:0 0 8px;color:var(--muted);font-weight:600}
     <div class="grp"><label>Tônica (nota)</label><div class="seg" id="g-li" data-k="li"></div></div>
     <div class="grp"><label>Alteração da tônica</label><div class="seg" id="g-ac" data-k="ac"></div></div>
     <div class="grp"><label>Oitavas</label><div class="seg" id="g-oct" data-k="oct"></div></div>
+    <div class="grp"><button type="button" id="hear">🔊 Ouvir a escala</button><p class="hint" id="pl" style="margin-top:6px"></p></div>
   </div>
   <div class="row"><label for="a4">Lá =</label><input type="number" id="a4" min="400" max="480" value="442"></div>
   </div>
@@ -153,6 +155,46 @@ function mkScale(li,a,q,tmp){
   });
 }
 const curDegs=()=>S.mode==='scale'&&S.li>=0?mkScale(S.li,S.ac,S.q,S.tmp):null;
+
+// Ouvir a escala selecionada (usa as mesmas alturas esperadas que o app mede)
+let pl={on:false,n:[],t:[]};
+function scaleSeq(){
+  if(S.li<0)return null;
+  const dg=mkScale(S.li,S.ac,S.q,S.tmp),up=[];let prev=null;
+  for(let o=0;o<=S.oct;o++)dg.forEach((d,i)=>{
+    if(o===S.oct&&i>0)return;                       // última volta: só a tônica final
+    let e=d.e;
+    if(prev===null){while(e-1200>=-1400)e-=1200}    // tônica na oitava mais grave do violino (Sol3)
+    else{e-=1200*Math.floor((e-prev)/1200);while(e<=prev)e+=1200}
+    prev=e;up.push({name:d.name,f:a4()*Math.pow(2,e/1200)});
+  });
+  return [...up,...up.slice(0,-1).reverse()];
+}
+function stopScale(){
+  pl.t.forEach(clearTimeout);
+  pl.n.forEach(n=>{try{n.stop()}catch(e){}});
+  pl={on:false,n:[],t:[]};$('#hear').textContent='🔊 Ouvir a escala';
+}
+function playScale(){
+  if(pl.on){stopScale();$('#pl').textContent='';return}
+  if(rec){$('#pl').textContent='Pare a gravação antes de ouvir a escala.';return}
+  const sq=scaleSeq();
+  if(!sq){$('#pl').textContent='Escolha uma tônica (sem “Auto”) para ouvir a escala.';return}
+  ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();ctx.resume();
+  const step=.8,t0=ctx.currentTime+.1;
+  pl.on=true;$('#hear').textContent='■ Parar o som';
+  sq.forEach((x,k)=>{
+    const t=t0+k*step,d=step*.95,o1=ctx.createOscillator(),o2=ctx.createOscillator(),g=ctx.createGain(),lp=ctx.createBiquadFilter();
+    o1.type=o2.type='sawtooth';o1.frequency.value=x.f;o2.frequency.value=x.f*1.003;
+    lp.type='lowpass';lp.frequency.value=Math.min(x.f*5,6000);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.18,t+.04);g.gain.setValueAtTime(.18,t+d-.12);g.gain.linearRampToValueAtTime(0,t+d);
+    o1.connect(lp);o2.connect(lp);lp.connect(g);g.connect(ctx.destination);
+    o1.start(t);o2.start(t);o1.stop(t+d+.05);o2.stop(t+d+.05);pl.n.push(o1,o2);
+    pl.t.push(setTimeout(()=>{$('#pl').textContent=`♪ ${x.name} · ${x.f.toFixed(1)} Hz`},(t-ctx.currentTime)*1000));
+  });
+  pl.t.push(setTimeout(()=>{stopScale();$('#pl').textContent=''},(sq.length*step+.2)*1000));
+}
+$('#hear').onclick=playScale;
 
 // Detecção de altura (YIN), faixa de violino: ~180 Hz a 2200 Hz
 function yin(x,sr){
@@ -238,6 +280,7 @@ function tick(){
 }
 
 async function start(){
+  if(pl.on)stopScale();
   try{
     ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();await ctx.resume();
     stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
