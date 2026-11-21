@@ -86,6 +86,7 @@ h2{font-size:.95rem;margin:0 0 8px;color:var(--muted);font-weight:600}
     <div class="grp"><label>Alteração da tônica</label><div class="seg" id="g-ac" data-k="ac"></div></div>
     <div class="grp"><label>Oitavas</label><div class="seg" id="g-oct" data-k="oct"></div></div>
     <div class="grp"><label>Velocidade ao ouvir (segundos por nota)</label><div class="seg" id="g-spd" data-k="spd"></div></div>
+    <div class="grp"><label>Metrônomo antes da escala (no mesmo tempo da velocidade)</label><div class="seg" id="g-cnt" data-k="cnt"></div></div>
     <div class="grp"><button type="button" id="hear">🔊 Ouvir a escala</button><p class="hint" id="pl" style="margin-top:6px"></p></div>
   </div>
   <div class="row"><label for="a4">Lá =</label><input type="number" id="a4" min="400" max="480" value="442"></div>
@@ -123,7 +124,7 @@ const nm=m=>NAMES[((m%12)+12)%12]+(Math.floor(m/12)-2);
 const pc=m=>((m%12)+12)%12;
 const wr=x=>(((x+600)%1200)+1200)%1200-600;
 const SC={maj:[0,2,4,5,7,9,11],min:[0,2,3,5,7,8,10]};
-const S={tmp:0,mode:'free',q:'maj',li:-1,ac:0,oct:1,spd:0.8};
+const S={tmp:0,mode:'free',q:'maj',li:-1,ac:0,oct:1,spd:0.8,cnt:4};
 const OPT={
   tmp:[[0,'Não temperado'],[1,'Temperado']],
   mode:[['free','Livre'],['scale','Escala']],
@@ -131,7 +132,8 @@ const OPT={
   li:[[-1,'Auto'],...LN.map((n,i)=>[i,n])],
   ac:[[-2,'♭♭'],[-1,'♭'],[0,'♮'],[1,'♯'],[2,'𝄪']],
   oct:[[1,'1'],[2,'2']],
-  spd:[[1.8,'Muito lenta'],[1.2,'Lenta'],[0.8,'Normal'],[0.5,'Rápida'],[0.3,'Muito rápida']]
+  spd:[[1.8,'Muito lenta'],[1.2,'Lenta'],[0.8,'Normal'],[0.5,'Rápida'],[0.3,'Muito rápida']],
+  cnt:[[0,'Sem'],[2,'2 batidas'],[4,'4 batidas']]
 };
 Object.keys(OPT).forEach(k=>{$('#g-'+k).innerHTML=OPT[k].map(([v,l])=>`<button type="button" data-v="${v}">${l}</button>`).join('')});
 function sync(){
@@ -183,10 +185,17 @@ function playScale(){
   const sq=scaleSeq();
   if(!sq){$('#pl').textContent='Escolha uma tônica (sem “Auto”) para ouvir a escala.';return}
   ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();ctx.resume();
-  const step=S.spd,t0=ctx.currentTime+.1;
+  const step=S.spd,cb=S.cnt,t0=ctx.currentTime+.1,ts=t0+cb*step;   // ts = início da escala, depois das batidas
   pl.on=true;$('#hear').textContent='■ Parar o som';
+  for(let i=0;i<cb;i++){   // metrônomo: um clique por tempo, o primeiro mais agudo
+    const t=t0+i*step,o=ctx.createOscillator(),g=ctx.createGain();
+    o.type='square';o.frequency.value=i===0?1500:1000;
+    g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.3,t+.002);g.gain.exponentialRampToValueAtTime(.0001,t+.06);
+    o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+.08);pl.n.push(o);
+    pl.t.push(setTimeout(()=>{$('#pl').textContent=`🥁 Metrônomo · ${i+1}/${cb}`},(t-ctx.currentTime)*1000));
+  }
   sq.forEach((x,k)=>{
-    const t=t0+k*step,d=step*.95,o1=ctx.createOscillator(),o2=ctx.createOscillator(),g=ctx.createGain(),lp=ctx.createBiquadFilter();
+    const t=ts+k*step,d=step*.95,o1=ctx.createOscillator(),o2=ctx.createOscillator(),g=ctx.createGain(),lp=ctx.createBiquadFilter();
     o1.type=o2.type='sawtooth';o1.frequency.value=x.f;o2.frequency.value=x.f*1.003;
     lp.type='lowpass';lp.frequency.value=Math.min(x.f*5,6000);
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.18,t+.04);g.gain.setValueAtTime(.18,t+d-.12);g.gain.linearRampToValueAtTime(0,t+d);
@@ -194,7 +203,7 @@ function playScale(){
     o1.start(t);o2.start(t);o1.stop(t+d+.05);o2.stop(t+d+.05);pl.n.push(o1,o2);
     pl.t.push(setTimeout(()=>{$('#pl').textContent=`♪ ${x.name} · ${x.f.toFixed(1)} Hz`},(t-ctx.currentTime)*1000));
   });
-  pl.t.push(setTimeout(()=>{stopScale();$('#pl').textContent=''},(sq.length*step+.2)*1000));
+  pl.t.push(setTimeout(()=>{stopScale();$('#pl').textContent=''},((cb+sq.length)*step+.2)*1000));
 }
 $('#hear').onclick=playScale;
 
