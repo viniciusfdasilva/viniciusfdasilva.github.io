@@ -85,6 +85,7 @@ h2{font-size:.95rem;margin:0 0 8px;color:var(--muted);font-weight:600}
     <div class="grp"><label>Tônica (nota)</label><div class="seg" id="g-li" data-k="li"></div></div>
     <div class="grp"><label>Alteração da tônica</label><div class="seg" id="g-ac" data-k="ac"></div></div>
     <div class="grp"><label>Oitavas</label><div class="seg" id="g-oct" data-k="oct"></div></div>
+    <div class="grp"><label>Velocidade ao ouvir (segundos por nota)</label><div class="seg" id="g-spd" data-k="spd"></div></div>
     <div class="grp"><button type="button" id="hear">🔊 Ouvir a escala</button><p class="hint" id="pl" style="margin-top:6px"></p></div>
   </div>
   <div class="row"><label for="a4">Lá =</label><input type="number" id="a4" min="400" max="480" value="442"></div>
@@ -122,14 +123,15 @@ const nm=m=>NAMES[((m%12)+12)%12]+(Math.floor(m/12)-2);
 const pc=m=>((m%12)+12)%12;
 const wr=x=>(((x+600)%1200)+1200)%1200-600;
 const SC={maj:[0,2,4,5,7,9,11],min:[0,2,3,5,7,8,10]};
-const S={tmp:0,mode:'free',q:'maj',li:-1,ac:0,oct:1};
+const S={tmp:0,mode:'free',q:'maj',li:-1,ac:0,oct:1,spd:0.8};
 const OPT={
   tmp:[[0,'Não temperado'],[1,'Temperado']],
   mode:[['free','Livre'],['scale','Escala']],
   q:[['maj','Maior'],['min','Menor']],
   li:[[-1,'Auto'],...LN.map((n,i)=>[i,n])],
   ac:[[-2,'♭♭'],[-1,'♭'],[0,'♮'],[1,'♯'],[2,'𝄪']],
-  oct:[[1,'1'],[2,'2']]
+  oct:[[1,'1'],[2,'2']],
+  spd:[[1.8,'Muito lenta'],[1.2,'Lenta'],[0.8,'Normal'],[0.5,'Rápida'],[0.3,'Muito rápida']]
 };
 Object.keys(OPT).forEach(k=>{$('#g-'+k).innerHTML=OPT[k].map(([v,l])=>`<button type="button" data-v="${v}">${l}</button>`).join('')});
 function sync(){
@@ -181,7 +183,7 @@ function playScale(){
   const sq=scaleSeq();
   if(!sq){$('#pl').textContent='Escolha uma tônica (sem “Auto”) para ouvir a escala.';return}
   ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();ctx.resume();
-  const step=.8,t0=ctx.currentTime+.1;
+  const step=S.spd,t0=ctx.currentTime+.1;
   pl.on=true;$('#hear').textContent='■ Parar o som';
   sq.forEach((x,k)=>{
     const t=t0+k*step,d=step*.95,o1=ctx.createOscillator(),o2=ctx.createOscillator(),g=ctx.createGain(),lp=ctx.createBiquadFilter();
