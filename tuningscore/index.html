@@ -81,7 +81,7 @@ h2{font-size:.95rem;margin:0 0 8px;color:var(--muted);font-weight:600}
   <div class="grp"><label>Afinação</label><div class="seg" id="g-tmp" data-k="tmp"></div></div>
   <div class="grp"><label>Exercício</label><div class="seg" id="g-mode" data-k="mode"></div></div>
   <div id="scW" class="hide">
-    <div class="grp"><label>Tipo de escala</label><div class="seg" id="g-q" data-k="q"></div></div>
+    <div class="grp"><label>Tipo (maior ou menor)</label><div class="seg" id="g-q" data-k="q"></div></div>
     <div class="grp"><label>Tônica (nota)</label><div class="seg" id="g-li" data-k="li"></div></div>
     <div class="grp"><label>Alteração da tônica</label><div class="seg" id="g-ac" data-k="ac"></div></div>
     <div class="grp"><label>Oitavas</label><div class="seg" id="g-oct" data-k="oct"></div></div>
@@ -124,10 +124,19 @@ const nm=m=>NAMES[((m%12)+12)%12]+(Math.floor(m/12)-2);
 const pc=m=>((m%12)+12)%12;
 const wr=x=>(((x+600)%1200)+1200)%1200-600;
 const SC={maj:[0,2,4,5,7,9,11],min:[0,2,3,5,7,8,10]};
-const S={tmp:0,mode:'free',q:'maj',li:-1,ac:0,oct:1,spd:0.8,cnt:4};
+// Entonação justa: cêntimos de cada grau acima da tônica (maior: 9/8, 5/4, 4/3, 3/2, 5/3, 15/8; menor natural: 9/8, 6/5, 4/3, 3/2, 8/5, 9/5)
+const JI={
+  maj:[0,203.91,386.31,498.04,701.96,884.36,1088.27],
+  min:[0,203.91,315.64,498.04,701.96,813.69,1017.60]
+};
+const TN=['pitagórica','temperada','justa'];   // nomes das afinações (índice = S.tmp)
+const DEFTMP={free:1,scale:0,arp:2};   // afinação sugerida ao trocar de exercício (o usuário pode mudar depois)
+let pl={on:false,n:[],t:[]};
+const hearTxt=()=>S.mode==='arp'?'🔊 Ouvir o arpejo':'🔊 Ouvir a escala';
+const S={tmp:1,mode:'free',q:'maj',li:-1,ac:0,oct:1,spd:0.8,cnt:4};
 const OPT={
-  tmp:[[0,'Não temperado'],[1,'Temperado']],
-  mode:[['free','Livre'],['scale','Escala']],
+  tmp:[[0,'Pitagórica'],[1,'Temperada'],[2,'Justa']],
+  mode:[['free','Livre'],['scale','Escala'],['arp','Arpejo']],
   q:[['maj','Maior'],['min','Menor']],
   li:[[-1,'Auto'],...LN.map((n,i)=>[i,n])],
   ac:[[-2,'♭♭'],[-1,'♭'],[0,'♮'],[1,'♯'],[2,'𝄪']],
@@ -138,37 +147,49 @@ const OPT={
 Object.keys(OPT).forEach(k=>{$('#g-'+k).innerHTML=OPT[k].map(([v,l])=>`<button type="button" data-v="${v}">${l}</button>`).join('')});
 function sync(){
   document.querySelectorAll('.seg').forEach(g=>g.querySelectorAll('button').forEach(b=>b.classList.toggle('on',String(S[g.dataset.k])===b.dataset.v)));
-  $('#scW').classList.toggle('hide',S.mode!=='scale');
+  $('#scW').classList.toggle('hide',S.mode==='free');
+  if(!pl.on)$('#hear').textContent=hearTxt();
   $('#g-ac').parentNode.classList.toggle('hide',S.li<0);
-  $('#note').textContent=S.tmp?'Modo temperado: todas as notas seguem o temperamento igual, o mesmo do afinador. Na escala, a grafia (Mi♯, Fá♭ etc.) só muda o nome da nota.':'Modo não temperado (pitagórico): sustenidos são mais altos que o bemol enarmônico (Mi♯ é diferente de Fá, Fá♭ de Mi). No exercício “Livre” não há escala para definir a grafia, então a análise usa o temperado.';
+  const notes_=[
+    'Modo pitagórico: quintas puras (3:2). Sustenidos são mais altos que o bemol enarmônico (Mi♯ é diferente de Fá, Fá♭ de Mi) e as terças maiores ficam mais largas, o que dá brilho à melodia. No exercício “Livre” não há escala para definir a grafia, então a análise usa o temperado.',
+    'Modo temperado: todas as notas seguem o temperamento igual, o mesmo do afinador. Na escala, a grafia (Mi♯, Fá♭ etc.) só muda o nome da nota.',
+    'Modo justo: os graus seguem razões simples a partir da tônica (terça maior 5:4, sexta maior 5:3, sétima maior 15:8). Terças, sextas e sétimas ficam cerca de 21 ¢ mais baixas que na pitagórica, como em acordes de quarteto. No exercício “Livre” não há escala para definir a tônica, então a análise usa o temperado.'
+  ];
+  $('#note').textContent=notes_[S.tmp];
 }
-document.querySelectorAll('.seg').forEach(g=>g.onclick=e=>{const b=e.target.closest('button');if(!b)return;const v=b.dataset.v;S[g.dataset.k]=isNaN(+v)?v:+v;sync()});
+document.querySelectorAll('.seg').forEach(g=>g.onclick=e=>{const b=e.target.closest('button');if(!b)return;const v=b.dataset.v;S[g.dataset.k]=isNaN(+v)?v:+v;if(g.dataset.k==='mode')S.tmp=DEFTMP[S.mode];sync()});
 sync();
 
 let ctx=null,an=null,buf=null,stream=null,rec=false,notes=[],curr=null,timer=null,t0=0;
 const a4=()=>+$('#a4').value||440;
 
 // escala com a grafia correta: cada grau tem nome e altura esperada (cêntimos acima do Lá, dentro da oitava)
+// tmp: 0 pitagórica, 1 temperada, 2 justa
 function mkScale(li,a,q,tmp){
   const sc=SC[q],tpc=(LP[li]+a+120)%12;
+  const pit=k=>(((k-3)*701.955)%1200+1200)%1200;   // pitagórico: quintas puras de 701,955 ¢, a partir do Lá
+  const tonicE=pit(LF[li]+7*a);                    // altura pitagórica da tônica (base da entonação justa)
   return sc.map((s,i)=>{
     const l=(li+i)%7,need=(tpc+s)%12;let ac=((need-LP[l])%12+12)%12;if(ac>6)ac-=12;
     const k=LF[l]+7*ac;
-    const e=tmp?(((LP[l]+ac-9)*100)%1200+1200)%1200:(((k-3)*701.955)%1200+1200)%1200;   // pitagórico: quintas puras de 701,955 ¢
+    const e=tmp===1?(((LP[l]+ac-9)*100)%1200+1200)%1200
+           :tmp===2?(tonicE+JI[q][i])%1200
+           :pit(k);
     return{name:LN[l]+AC(ac),e,ac};
   });
 }
-const curDegs=()=>S.mode==='scale'&&S.li>=0?mkScale(S.li,S.ac,S.q,S.tmp):null;
+// arpejo = graus 1, 3 e 5 da escala
+const degs=(li,a,q,tmp)=>{const d=mkScale(li,a,q,tmp);return S.mode==='arp'?[0,2,4].map(i=>d[i]):d};
+const curDegs=()=>S.mode!=='free'&&S.li>=0?degs(S.li,S.ac,S.q,S.tmp):null;
 
 // Ouvir a escala selecionada (usa as mesmas alturas esperadas que o app mede)
-let pl={on:false,n:[],t:[]};
 function scaleSeq(){
   if(S.li<0)return null;
-  const dg=mkScale(S.li,S.ac,S.q,S.tmp),up=[];let prev=null;
+  const dg=degs(S.li,S.ac,S.q,S.tmp),up=[];let prev=null;
   for(let o=0;o<=S.oct;o++)dg.forEach((d,i)=>{
     if(o===S.oct&&i>0)return;                       // última volta: só a tônica final
     let e=d.e;
-    if(prev===null){while(e-1200>=-1400)e-=1200}    // tônica na oitava mais grave do violino (Sol3)
+    if(prev===null){while(e-1200>=-1450)e-=1200}    // tônica na oitava mais grave do violino (Sol3 = −1400 ¢; folga de 50 ¢, pois o Sol pitagórico/justo fica ~4 ¢ abaixo do temperado)
     else{e-=1200*Math.floor((e-prev)/1200);while(e<=prev)e+=1200}
     prev=e;up.push({name:d.name,f:a4()*Math.pow(2,e/1200)});
   });
@@ -177,7 +198,7 @@ function scaleSeq(){
 function stopScale(){
   pl.t.forEach(clearTimeout);
   pl.n.forEach(n=>{try{n.stop()}catch(e){}});
-  pl={on:false,n:[],t:[]};$('#hear').textContent='🔊 Ouvir a escala';
+  pl={on:false,n:[],t:[]};$('#hear').textContent=hearTxt();
 }
 function playScale(){
   if(pl.on){stopScale();$('#pl').textContent='';return}
@@ -262,7 +283,7 @@ function dirs(){
 }
 const sg=v=>(Math.round(v)>=0?'+':'−')+Math.abs(Math.round(v));
 function chips(){
-  if(S.mode==='scale')dirs();
+  if(S.mode!=='free')dirs();
   const mk=n=>{
     const k=Math.abs(n.med)<=10?'g':Math.abs(n.med)<=25?'y':'r';
     const r=Math.round(n.lo)===Math.round(n.hi)?sg(n.lo):sg(n.lo)+' a '+sg(n.hi);
@@ -271,7 +292,7 @@ function chips(){
     return `<span class="chip ${k}" title="${status}">${indicator} ${n.lab} ${r}</span>`;
   };
   const box=(t,c,a)=>`<div class="cont ${c}"><div class="ct">${t}</div><div class="chips">${a.map(mk).join('')}</div></div>`;
-  if(S.mode!=='scale'||notes.length<2){$('#chips').innerHTML=notes.map(mk).join('');return}
+  if(S.mode==='free'||notes.length<2){$('#chips').innerHTML=notes.map(mk).join('');return}
   const A=notes.filter(x=>x.dir==='a'),D=notes.filter(x=>x.dir==='d'),L=a=>a[a.length-1].lab,top=A.length?A[A.length-1]:null;
   $('#chips').innerHTML=(A.length?box(`↗ Subida (${A[0].lab} → ${L(A)})`,'up',A):'')+(D.length?box(`↘ Descida (${(top||D[0]).lab} → ${L(D)})`,'dn',D):'');
 }
@@ -328,7 +349,7 @@ function cmpTbl(A,D,dg){
 function feedback(){
   const n=notes.length;
   if(n<2){$('#fb').innerHTML='<p>Não detectei notas suficientes. Toque com som firme, perto do microfone e em ambiente silencioso, e tente de novo.</p>';return}
-  const scale=S.mode==='scale',q=S.q,qn=q==='maj'?'maior':'menor natural',sc=SC[q];
+  const scale=S.mode!=='free',arp=S.mode==='arp',q=S.q,qn=q==='maj'?'maior':arp?'menor':'menor natural',sc=arp?[0,2,4].map(i=>SC[q][i]):SC[q];
   let dg=null,tName='',tUsed=0,items=[],tbl='';
   if(scale){
     const fit=k=>notes.filter(x=>sc.some(i=>(k+i)%12===pc(x.midi))).length;
@@ -342,7 +363,7 @@ function feedback(){
       if(fit(best)>fit(tp)&&fit(best)/n>=0.9){const[bl,ba]=AUTO[q][best];items.push(['r',`<b>Atenção:</b> você escolheu ${LN[li]+AC(ac)}, mas as notas parecem ser de ${LN[bl]+AC(ba)} ${qn}. Mude a tônica ou use “Auto”.`])}
     }
     tName=LN[li]+AC(ac);tUsed=(LP[li]+ac+120)%12;
-    dg=mkScale(li,ac,q,S.tmp);
+    dg=degs(li,ac,q,S.tmp);
   }
   notes.forEach(x=>res(x,dg));chips();
   const cls=x=>Math.abs(x.med)<=10?'g':Math.abs(x.med)<=25?'y':'r';
@@ -371,7 +392,7 @@ function feedback(){
     const played=new Set(notes.filter(x=>x.di>=0).map(x=>x.di));
     const outside=[...new Set(notes.filter(x=>x.out).map(x=>NAMES[pc(x.midi)]))];
     const missing=dg.filter((d,i)=>!played.has(i)).map(d=>d.name);
-    items.push([outside.length||missing.length?'y':'g',`<b>Escala de ${tName} ${qn} (${S.tmp?'temperada':'não temperada'}):</b> `+
+    items.push([outside.length||missing.length?'y':'g',`<b>${arp?'Arpejo':'Escala'} de ${tName} ${qn} (${TN[S.tmp]}):</b> `+
       (outside.length?`notas fora da escala: ${outside.join(', ')}. `:'todas as notas pertencem à escala. ')+
       (missing.length?`Faltaram: ${missing.join(', ')}.`:'Todos os graus apareceram.')]);
     dirs();
@@ -397,13 +418,13 @@ function feedback(){
       const cv=Math.sqrt(io.reduce((s,x)=>s+(x-m)**2,0)/io.length)/m;
       items.push(cv<0.2?['g','<b>Ritmo:</b> intervalos entre as notas bem regulares.']:['y',`<b>Ritmo:</b> o tempo entre as notas variou cerca de ${Math.round(cv*100)}%. Tente um metrônomo.`]);
     }
-  }else if(!S.tmp)items.push(['y','<b>Livre:</b> sem escala escolhida, a análise usa o temperado. Escolha “Escala” para medir em modo não temperado.']);
+  }else if(S.tmp!==1)items.push(['y',`<b>Livre:</b> sem escala escolhida, a análise usa o temperado. Escolha “Escala” ou “Arpejo” para medir em modo ${TN[S.tmp]}.`]);
   h+=items.map(([k,t])=>`<div class="item ${k}">${t}</div>`).join('')+tbl;
   let msg;
   if(n<3)msg='Sessão curta demais para o histórico (mínimo de 3 notas).';
   else try{
     const KEY='tuningscore:sessions',arr=JSON.parse(localStorage.getItem(KEY)||'[]');
-    arr.push({t:Date.now(),n,g:pg,y:py,r:pr,abs:Math.round(abs),mean:Math.round(mean),mode:scale?q:'free',ton:tUsed,sp:tName,tmp:S.tmp,oct:scale?S.oct:0,notes:notes.map(x=>[x.midi,Math.round(x.lo),Math.round(x.med),Math.round(x.hi),Math.round(x.dur*10)])});
+    arr.push({t:Date.now(),n,g:pg,y:py,r:pr,abs:Math.round(abs),mean:Math.round(mean),mode:scale?q:'free',ex:S.mode,ton:tUsed,sp:tName,tmp:S.tmp,oct:scale?S.oct:0,notes:notes.map(x=>[x.midi,Math.round(x.lo),Math.round(x.med),Math.round(x.hi),Math.round(x.dur*10)])});
     localStorage.setItem(KEY,JSON.stringify(arr.slice(-500)));
     msg=`✓ Sessão salva no seu histórico (${arr.length} no total).`;
   }catch(e){msg='Não consegui salvar: o navegador bloqueou o armazenamento do site (aba privada ou bloqueio de dados).'}
