@@ -1,0 +1,165 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Padrões do violino</title>
+<style>
+:root{--bg:#f7f5f1;--card:#fff;--ink:#1d1b19;--mut:#6b655e;--line:#ddd6cc;--acc:#8a3b12;--ok:#2f9e44;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171513;--card:#211e1b;--ink:#f1ece6;--mut:#a39b91;--line:#3a352f;--acc:#e8a97e;--ok:#51cf66}}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:560px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:26px;margin:0 0 4px}h2{font-size:18px;margin:26px 0 10px}
+.sub{color:var(--mut);margin:0 0 12px}.warn{font-size:14px;margin:4px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{display:flex;flex-direction:column;font-size:13px;color:var(--mut);gap:3px}
+select,input{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px;width:100%}
+.pb{grid-column:1/3;font:inherit;font-weight:600;padding:12px;border-radius:10px;border:1px solid var(--ink);background:var(--ink);color:var(--bg);cursor:pointer}
+.pb.rec{background:#e03131;border-color:#e03131;color:#fff}
+#st{min-height:1.5em;margin-top:8px;font-size:14px;color:var(--mut)}
+.row{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--card)}
+.top{display:flex;justify-content:space-between;align-items:center;font-weight:600}
+.code{background:var(--ink);color:var(--bg);border-radius:8px;padding:1px 9px;font-size:14px}
+.pat{display:flex;gap:4px;margin:8px 0 4px}
+.b{width:26px;height:26px;border-radius:50%;border:2px solid var(--ink);display:grid;place-items:center;font-size:12px;font-weight:700;transition:background .08s}
+.b.f{background:var(--ink);color:var(--bg)}
+.b.o{border-style:dashed}
+.b.play{background:var(--ok);border-color:var(--ok);color:#fff}
+.sep{width:10px}.notes{font-size:14px;color:var(--mut)}
+</style></head><body><main>
+<h1>🎻 Padrões do violino</h1>
+<p class="sub">Escolha a escala e veja qual padrão usar em cada corda, de uma tônica até a tônica, em 1 ou 2 oitavas, nas posições 1 e 2. Na corda Mi, a mão sobe de posição quando precisa.</p>
+<div class="card"><div class="grid">
+<label>Tipo<select id="mode"><option value="0">Maior</option><option value="1">Menor natural</option><option value="2">Menor harmônica</option></select></label>
+<label>Tônica (nota)<select id="tl"><option value="0">Dó</option><option value="1" selected>Ré</option><option value="2">Mi</option><option value="3">Fá</option><option value="4">Sol</option><option value="5">Lá</option><option value="6">Si</option></select></label>
+<label>Alteração da tônica<select id="acc"><option value="0">Natural ♮</option><option value="1">Sustenido ♯</option><option value="-1">Bemol ♭</option><option value="2">Dobrado sustenido 𝄪</option><option value="-2">Dobrado bemol ♭♭</option></select></label>
+<label>Posição<select id="pos"><option value="1">1ª posição</option><option value="2">2ª posição</option></select></label>
+<label>Oitavas<select id="oct"><option value="1">1 oitava</option><option value="2">2 oitavas</option></select></label>
+<label>Lá (Hz)<input type="number" id="a4" min="400" max="480" step="0.1" value="442" inputmode="decimal"></label>
+<label style="grid-column:1/3">Afinação do som<select id="tun"><option value="0">Não temperado (pitagórico)</option><option value="1">Temperado</option></select></label>
+</div></div>
+<div class="card"><div class="grid">
+<label>Andamento<select id="tempo"><option value="1.2">Lento</option><option value="0.8" selected>Médio</option><option value="0.5">Rápido</option></select></label>
+<label>Direção<select id="dir"><option value="0">Subindo</option><option value="1">Subindo e descendo</option></select></label>
+<button class="pb" id="play" type="button">▶ Tocar escala</button>
+</div><div id="st"></div></div>
+<h2>Padrão de cada corda</h2><div id="rows"></div>
+<p class="warn">● dedo apoiado · ○ espaço (meio tom sem dedo) · ◌ 0 = corda solta · bolinha verde = nota que está tocando. Padrões: 2A–2B, 3A–3D, 4A–4H.</p>
+</main>
+<script>
+const OPEN=[55,62,69,76],SN=['Sol','Ré','Lá','Mi'],LN=['Dó','Ré','Mi','Fá','Sol','Lá','Si'],LPC=[0,2,4,5,7,9,11],LF=[0,2,4,-1,1,3,5];
+const IV=[[0,2,4,5,7,9,11],[0,2,3,5,7,8,10],[0,2,3,5,7,8,11]];
+const AC=a=>a===0?'':a===2?'𝄪':a>0?'♯'.repeat(a):'♭'.repeat(-a);
+const PAT={"0,1":"2A","0,2":"2B","0,1,2":"3A","0,1,3":"3B","0,2,3":"3C","0,2,4":"3D","0,1,2,3":"4A","0,1,2,4":"4B","0,1,3,4":"4C","0,1,3,5":"4D","0,2,3,4":"4E","0,2,3,5":"4F","0,2,4,5":"4G","0,2,4,6":"4H"};
+const $=id=>document.getElementById(id);
+let cur=null,playing=false,tid=null,ctx=null,act=null;
+
+// frequência: pitagórico = quintas puras a partir do Lá escolhido; k = posição da nota na cadeia de quintas (Dó = 0)
+function freq(p,k){
+ const A=+$('a4').value||442;
+ if(+$('tun').value===1)return A*2**((p-69)/12);
+ const ab=(p-69)*100,e=(((k-3)*701.955)%1200+1200)%1200;
+ const dv=(((e-ab+600)%1200)+1200)%1200-600;
+ return A*2**((ab+dv)/1200);
+}
+function tone(f,d){
+ const t=ctx.currentTime,o=ctx.createOscillator(),v=ctx.createOscillator(),vg=ctx.createGain(),lp=ctx.createBiquadFilter(),g=ctx.createGain();
+ o.type='sawtooth';o.frequency.value=f;v.frequency.value=5.5;vg.gain.value=f*.004;v.connect(vg);vg.connect(o.frequency);
+ lp.type='lowpass';lp.frequency.value=Math.min(5000,f*5);
+ g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.22,t+.05);g.gain.setValueAtTime(.22,t+d-.1);g.gain.linearRampToValueAtTime(0,t+d);
+ o.connect(lp);lp.connect(g);g.connect(ctx.destination);
+ o.start(t);v.start(t);o.stop(t+d+.05);v.stop(t+d+.05);act={o,v,g};
+}
+function stopPlay(){
+ playing=false;clearTimeout(tid);
+ document.querySelectorAll('.b.play').forEach(b=>b.classList.remove('play'));
+ if(act){try{act.g.gain.cancelScheduledValues(ctx.currentTime);act.g.gain.setTargetAtTime(0,ctx.currentTime,.02);act.o.stop(ctx.currentTime+.12);act.v.stop(ctx.currentTime+.12)}catch(e){}act=null}
+ $('play').textContent='▶ Tocar escala';$('play').classList.remove('rec');$('st').textContent='';
+}
+function play(){
+ if(playing){stopPlay();return}
+ if(!cur)return;
+ ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();ctx.resume();
+ const d=+$('tempo').value,list=+$('dir').value?cur.steps.concat(cur.steps.slice(0,-1).reverse()):cur.steps;
+ playing=true;$('play').textContent='■ Parar';$('play').classList.add('rec');
+ const go=i=>{
+  if(!playing)return;
+  if(i>=list.length){stopPlay();return}
+  const x=list[i],f=freq(x.p,cur.ks[x.p%12]),b=$('b'+x.st+'_'+x.off);
+  if(b)b.classList.add('play');   // verde só enquanto a nota soa
+  $('st').textContent='Tocando: '+cur.names[x.p%12]+' · '+f.toFixed(1).replace('.',',')+' Hz';
+  tone(f,d);
+  tid=setTimeout(()=>{if(b)b.classList.remove('play');tid=setTimeout(()=>go(i+1),70)},d*1000);
+ };
+ go(0);
+}
+
+function render(){
+ stopPlay();
+ const li=+$('tl').value,ac=+$('acc').value,mode=+$('mode').value,pos=+$('pos').value;
+ const tpc=(LPC[li]+ac+12)%12,names={},ks={},lt={},at={};
+ IV[mode].forEach((iv,d)=>{const l=(li+d)%7,pc=(tpc+iv)%12;const a=((pc-LPC[l]+18)%12)-6;names[pc]=LN[l]+AC(a);ks[pc]=LF[l]+7*a;lt[pc]=l;at[pc]=a});
+ // REGRA DO DEDO: o dedo é a distância, em letras, acima da corda solta.
+ // 1ª posição: corda Sol: Lá=1 Si=2 Dó=3 Ré=4 · Ré: Mi Fá Sol Lá · Lá: Si Dó Ré Mi · Mi: Fá Sol Lá Si.
+ // Sustenido/bemol só movem o mesmo dedo meio tom (dobrados, um tom). Na 2ª posição cada dedo sobe uma letra.
+ const OPENL=[4,1,5,2],M1=IV[mode],noct=+$('oct').value;
+ const seq0=noct==2?M1.concat(M1.map(x=>x+12),[24]):M1.concat([12]);
+ const build=st0=>{
+  const out=[],lastF=(j,P)=>Math.max(0,...out.filter(x=>x.st===j&&x.po===P&&x.off>0).map(x=>x.fi));
+  let c=0;
+  for(const iv of seq0){
+   const q=st0+iv,l=lt[q%12],a=at[q%12];let hit=null;
+   if(pos==1&&!out.length)for(let j=0;j<4;j++)if(q===OPEN[j]&&a===0&&l===OPENL[j]){hit={st:j,off:0,fi:0,po:pos};break}   // só a primeira nota usa a corda solta
+   for(let j=c;j<4&&!hit;j++){
+    const o=q-OPEN[j],nat0=(LPC[l]-LPC[OPENL[j]]+12)%12,dist=(l-OPENL[j]+7)%7+7*Math.round((o-a-nat0)/12);   // distância em letras, contando oitavas
+    if(o===0&&out.length&&j>c){hit={st:j,off:0,fi:0,po:pos};break}   // outro nome para a corda solta (ex.: Si♭♭ = Lá): toca solta
+    const cp=Math.max(pos,...out.filter(x=>x.st===j).map(x=>x.po));
+    const Ps=j===3?Array.from({length:Math.max(0,9-cp)},(_,k)=>cp+k):[pos];   // só na corda Mi a mão pode subir de posição
+    for(const P of Ps){
+     let f=dist-(P-1);if(P==1&&dist===0&&o>0)f=1;
+     if(f>=1&&f<=4&&o>=1&&o<=(j===3?24:10)&&f>lastF(j,P)){hit={st:j,off:o,fi:f,po:P};break}
+    }
+   }
+   if(!hit)return null;
+   c=hit.st;out.push({p:q,...hit});
+  }
+  return out;
+ };
+ let steps=null;
+ for(let q=55;q<80&&!steps;q++)if(q%12===tpc)steps=build(q);
+ if(!steps){cur=null;$('rows').innerHTML='<div class="row">Esta escala não cabe nesta posição. Tente 1 oitava ou outra posição.</div>';return}
+ // baixo/alto = as duas posições do diagrama para cada dedo; fora delas, o dedo está recuado ou esticado
+ const kind=x=>{const lw=2*x.fi-1+2*(pos-1);return x.off===lw?'baixo':x.off===lw+1?'alto':x.off<lw?'recuado':'esticado'};
+ const kindN=x=>{const a=at[x.p%12],nat=x.off-a;   // posição já deslocada: compara com a nota natural do dedo
+  if(a===0)return x.off%2?'baixo':'alto';
+  if(a===1)return nat%2?'alto':'esticado';
+  if(a===-1)return nat%2?'recuado':'baixo';
+  return a>0?'esticado':'recuado'};
+ const kd=x=>x.po!==pos?kindN(x):kind(x);
+ cur={steps,names,ks};
+ let rows='<div class="row"><div class="notes">Sequência (começa e termina na tônica):</div><div class="top" style="font-size:15px">'+steps.map(x=>names[x.p%12]).join(' · ')+'</div></div>';
+ for(let i=0;i<4;i++){
+  const mine=steps.filter(x=>x.st===i);if(!mine.length)continue;
+  const pl=[...new Set(mine.map(x=>x.po))],codes=[];let body='',fora=[];
+  pl.forEach(P=>{
+   const g=mine.filter(x=>x.po===P),offs=g.filter(x=>x.off>0).map(x=>x.off),fm={};g.forEach(x=>{if(x.off>0)fm[x.off]=x.fi});
+   const op=g.some(x=>x.off===0)?`<span class="b o" id="b${i}_0">0</span>`:'';
+   const nl=g.map(x=>(x.off===0?'0':x.fi+' '+kd(x))+': '+names[x.p%12]).join(' · ');
+   let code='solta',pat=op;
+   if(offs.length){
+    const rel=offs.map(o=>o-offs[0]);code=offs.length==1?'1 dedo':(PAT[rel.join(',')]||'especial');
+    pat=op+(op?'<span class="sep"></span>':'');
+    for(let t=0;t<=rel[rel.length-1];t++){const k=rel.indexOf(t);pat+=k>=0?`<span class="b f" id="b${i}_${offs[k]}">${fm[offs[k]]}</span>`:'<span class="b"></span>'}
+   }
+   codes.push(code);
+   body+=(pl.length>1?`<div class="notes"><b>${P}ª posição</b></div>`:'')+`<div class="pat">${pat}</div><div class="notes">${nl}</div>`;
+   fora=fora.concat(g.filter(x=>x.off>0&&kd(x)!=='baixo'&&kd(x)!=='alto'));
+  });
+  const ajuste=fora.length?`<div class="notes warn">⚠ ${fora.map(x=>names[x.p%12]+' ('+kd(x)+')').join(', ')}: o dedo sai das duas posições do diagrama por causa do ${fora.some(x=>Math.abs(at[x.p%12])>1)?'dobrado ':''}sustenido/bemol.</div>`:'';
+  rows+=`<div class="row"><div class="top"><span>Corda ${SN[i]}</span><span class="code">${codes.join(' → ')}</span></div>${body}${ajuste}</div>`;
+ }
+ $('rows').innerHTML=rows;
+}
+['mode','tl','acc','pos','oct'].forEach(id=>$(id).addEventListener('change',render));
+$('play').onclick=play;
+render();
+</script></body></html>
